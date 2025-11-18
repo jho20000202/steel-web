@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>預計進料登記</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .form { display:flex; flex-direction:column; gap:12px; }
+      .date-picker { position: relative; }
+      .date-dropdown { position:absolute; top: calc(100% + 4px); right: 0; width: 280px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.25); z-index: 20; display: none; }
+      .date-dropdown.show { display: block; }
+      .date-dropdown .header { display:flex; align-items:center; justify-content:space-between; padding:8px; }
+      .date-dropdown .label { font-weight:600; }
+      .date-dropdown .grid { display:grid; grid-template-columns: repeat(7,1fr); gap:4px; padding:8px; }
+      .date-dropdown .cell { text-align:center; padding:6px 0; border-radius:6px; cursor:pointer; }
+      .date-dropdown .cell.dow { font-size:12px; color:#a3a9b3; cursor:default; }
+      .date-dropdown .cell.disabled { color:#65707a; cursor:default; }
+      .date-dropdown .cell.today { border: 1px dashed var(--border); }
+      .date-dropdown .cell:hover { background: rgba(255,255,255,0.06); }
+      .fab-top { position: fixed; bottom: 16px; right: 16px; display: none; border-radius: 999px; }
+    </style>
+  </head>
+  <body>
+    <div id="page" class="section">
+      <div class="card">
+        <div class="row">
+          <div class="app-title">預計進料登記</div>
+          <a class="btn" href="index.html">返回主畫面</a>
+        </div>
+        <div class="form" style="margin-top:12px;">
+          <label>構件編號<input id="compId" class="btn" style="width:100%;" placeholder="例如 A-001" /></label>
+          <label>
+            預計到貨日期
+            <div class="date-picker">
+              <input id="plannedAt" class="btn" style="width:100%;" placeholder="YYYY-MM-DD" readonly />
+              <div id="dateDropdown" class="date-dropdown">
+                <div class="header">
+                  <button class="btn" id="prevMonthBtn" title="上一月">〈</button>
+                  <div id="monthLabel" class="label"></div>
+                  <button class="btn" id="nextMonthBtn" title="下一月">〉</button>
+                </div>
+                <div class="grid" id="dowRow"></div>
+                <div class="grid" id="dateGrid"></div>
+              </div>
+            </div>
+          </label>
+          <button class="btn primary" id="submitBtn">送出</button>
+          <div class="muted" style="margin-top:12px;">目前預計進料清單</div>
+          <div id="plannedList" class="list" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+    <button class="btn fab-top" id="toTopPlanned">↑</button>
+    <script>
+      const get = (k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
+      const set = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
+      const libs = ()=> get('componentsLibrary', []);
+      const positionOptionsForId = (id)=> Array.from(new Set(libs()
+        .filter(x=>String(x.id)===String(id))
+        .map(x=>String(x.position||'').trim())
+        .filter(Boolean)
+      )).sort();
+      const scheduledPositionsForId = (id)=> Array.from(new Set((get('plannedItems', [])||[])
+        .filter(x=>String(x.id)===String(id))
+        .map(x=>String(x.position||'').trim())
+        .filter(Boolean)
+      ));
+      const receivedPositionsForId = (id)=> Array.from(new Set((get('todayRecords', [])||[])
+        .filter(x=>String(x.id)===String(id) && String(x.status)==='received')
+        .map(x=>String(x.position||'').trim())
+        .filter(Boolean)
+      ));
+      const usedPositionsForId = (id)=> Array.from(new Set((get('usedRecords', [])||[])
+        .filter(x=>String(x.id)===String(id))
+        .filter(x=>{
+          const v = Number(x?.qty ?? x?.quantity ?? x?.usedQty ?? 0);
+          return Number.isFinite(v) && v > 0;
+        })
+        .map(x=>String(x.position||'').trim())
+        .filter(Boolean)
+      ));
+      const takenPositionsForId = (id)=> {
+        const set = new Set();
+        const recv = new Set(receivedPositionsForId(id));
+        scheduledPositionsForId(id).forEach(p=>set.add(p));
+        receivedPositionsForId(id).forEach(p=>set.add(p));
+        // 僅在同位置已有「已收」紀錄時，才視為被「已使用」占用
+        usedPositionsForId(id).filter(p=> recv.has(p)).forEach(p=>set.add(p));
+        return Array.from(set);
+      };
+      const defaultAvailablePosForId = (id)=> {
+        const opts = positionOptionsForId(id);
+        const taken = new Set(takenPositionsForId(id));
+        const first = opts.find(pos=> !taken.has(pos));
+        return first || '';
+      };
+
+      function renderPlanned(){
+        const planned = get('plannedItems', []);
+        const listEl = document.getElementById('plannedList');
+        if(!listEl) return;
+        listEl.innerHTML='';
+        if(planned.length===0){ listEl.innerHTML='<div class="muted">目前沒有預計進料</div>'; return; }
+        // 依構件編號過濾對應位置選項
+        planned.forEach((p, idx)=>{
+          const row = document.createElement('div');
+          row.className='list-item';
+          row.innerHTML=`<div>${p.id}</div><div class="muted">${p.plannedAt||'-'}</div><div><select class="btn posSel" style="min-width:140px"></select></div><div style="display:flex; gap:8px;"><button class="btn danger delBtn">刪除</button><button class="btn primary recvBtn">標記已收</button></div>`;
+          const sel = row.querySelector('.posSel');
+          const makeOpt = (v,label)=>{ const o=document.createElement('option'); o.value=v; o.textContent=label; return o; };
+          sel.appendChild(makeOpt('', '選擇位置'));
+          const allPos = positionOptionsForId(p.id);
+          const taken = new Set(takenPositionsForId(p.id));
+          const initial = (p.position || defaultAvailablePosForId(p.id) || '');
+          const posOpts = allPos.filter(pos=> !taken.has(pos) || pos === initial);
+          posOpts.forEach(pos=> sel.appendChild(makeOpt(pos, pos)) );
+          if(initial && !posOpts.includes(initial)) sel.appendChild(makeOpt(initial, initial));
+          sel.value = initial;
+          sel.addEventListener('change', ()=>{
+            const plannedAll = get('plannedItems', []);
+            const cur = plannedAll[idx] || p;
+            plannedAll[idx] = { ...cur, position: sel.value };
+            set('plannedItems', plannedAll);
+          });
+          row.querySelector('.recvBtn').addEventListener('click',()=>{
+            const records = get('todayRecords', []);
+            records.push({ id:p.id, plannedAt:p.plannedAt, actualAt:new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), status:'received', position: (get('plannedItems', [])[idx]?.position || p.position || '') });
+            set('todayRecords', records);
+            const remain = planned.slice(0,idx).concat(planned.slice(idx+1));
+            set('plannedItems', remain);
+            renderPlanned();
+          });
+          row.querySelector('.delBtn').addEventListener('click',()=>{
+            const all = get('plannedItems', []);
+            all.splice(idx,1);
+            set('plannedItems', all);
+            renderPlanned();
+          });
+          listEl.appendChild(row);
+        });
+      }
+
+      document.getElementById('submitBtn').addEventListener('click',()=>{
+        const id = document.getElementById('compId').value.trim().toUpperCase();
+        const plannedAt = document.getElementById('plannedAt').value.trim();
+        if(!id || !plannedAt){ alert('請填寫構件編號與預計到貨日期'); return; }
+        const exists = libs().some(x=> String(x.id).toUpperCase() === id);
+        if(!exists){ alert('查無構件，請先於構件管理新增'); return; }
+        const planned = get('plannedItems', []);
+        const pos = defaultAvailablePosForId(id);
+        planned.push({ id, plannedAt, status:'scheduled', position: pos });
+        set('plannedItems', planned);
+        // 清空表單並刷新下方清單
+        document.getElementById('compId').value = '';
+        document.getElementById('plannedAt').value = '';
+        renderPlanned();
+        // 可選：提示
+        // alert('已新增預計進料');
+      });
+      // 日期下拉與日曆
+      (function(){
+        const input = document.getElementById('plannedAt');
+        const dropdown = document.getElementById('dateDropdown');
+        const monthLabel = document.getElementById('monthLabel');
+        const prevBtn = document.getElementById('prevMonthBtn');
+        const nextBtn = document.getElementById('nextMonthBtn');
+        const dowRow = document.getElementById('dowRow');
+        const grid = document.getElementById('dateGrid');
+
+        const today = new Date();
+        let viewYear = today.getFullYear();
+        let viewMonth = today.getMonth(); // 0-11
+
+        const pad = (n)=>String(n).padStart(2,'0');
+        function renderDow(){
+          const names = ['日','一','二','三','四','五','六'];
+          dowRow.innerHTML='';
+          names.forEach(n=>{ const d=document.createElement('div'); d.className='cell dow'; d.textContent=n; dowRow.appendChild(d); });
+        }
+        function render(){
+          monthLabel.textContent = `${viewYear}年${pad(viewMonth+1)}月`;
+          grid.innerHTML='';
+          const first = new Date(viewYear, viewMonth, 1);
+          const start = first.getDay();
+          const days = new Date(viewYear, viewMonth+1, 0).getDate();
+          for(let i=0;i<start;i++){ const b=document.createElement('div'); b.className='cell disabled'; grid.appendChild(b); }
+          for(let d=1; d<=days; d++){
+            const cell=document.createElement('div'); cell.className='cell'; cell.textContent=d;
+            if(viewYear===today.getFullYear() && viewMonth===today.getMonth() && d===today.getDate()){ cell.classList.add('today'); }
+            cell.addEventListener('click',()=>{ input.value = `${viewYear}-${pad(viewMonth+1)}-${pad(d)}`; hide(); });
+            grid.appendChild(cell);
+          }
+        }
+        function show(){ dropdown.classList.add('show'); }
+        function hide(){ dropdown.classList.remove('show'); }
+        input.addEventListener('click',(e)=>{ e.stopPropagation(); show(); });
+        prevBtn.addEventListener('click',(e)=>{ e.preventDefault(); e.stopPropagation(); viewMonth--; if(viewMonth<0){ viewMonth=11; viewYear--; } render(); });
+        nextBtn.addEventListener('click',(e)=>{ e.preventDefault(); e.stopPropagation(); viewMonth++; if(viewMonth>11){ viewMonth=0; viewYear++; } render(); });
+        document.addEventListener('click',(e)=>{ if(!dropdown.contains(e.target) && e.target!==input){ hide(); } });
+        renderDow();
+        render();
+      })();
+      // 初始渲染下方清單
+      renderPlanned();
+      (function(){ const cid=document.getElementById('compId'); if(cid){ cid.addEventListener('input', ()=>{ cid.value = cid.value.toUpperCase(); }); } })();
+      (function(){ const b=document.getElementById('toTopPlanned'); if(!b) return; b.addEventListener('click',()=>{ window.scrollTo({ top:0, behavior:'smooth' }); }); const onScroll=()=>{ b.style.display = window.scrollY>200 ? 'inline-flex' : 'none'; }; window.addEventListener('scroll', onScroll); onScroll(); })();
+    </script>
+  </body>
+</html>
