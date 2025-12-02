@@ -1,240 +1,504 @@
-<!doctype html>
-<html lang="zh-Hant">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>構件管理</title>
-    <link rel="stylesheet" href="styles.css?v=V6.1" />
+    <link rel="stylesheet" href="styles.css">
     <style>
-      .tools { display:flex; gap:8px; margin-top:12px; }
-      .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-      .list-item { grid-template-columns: 1.2fr 1.6fr .9fr .9fr; }
-      .muted-sm { color: var(--muted); font-size: 12px; }
-      .textarea { width:100%; min-height: 120px; }
-      .inline { display:flex; gap:8px; align-items:center; flex-wrap: wrap; }
-      .row-toggle { cursor: pointer; }
-      @media (max-width: 360px) { .list-item { grid-template-columns: 1fr; } }
-      .fab-top { position: fixed; bottom: 40px; right: 16px; display: none; border-radius: 999px; }
+        body {
+            padding: 20px;
+            background: #0f1320;
+            color: #fff;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #2f3340;
+            color: #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #3e4452;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #2f3340;
+            background: #1c2433;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .sort-select {
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #2f3340;
+            background: #1c2433;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .component-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .component-item {
+            background: #1c2433;
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .component-item:hover {
+            background: #252b3b;
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #3d7bff;
+        }
+
+        .item-detail {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .item-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .status-unplanned {
+            background: #2f3340;
+            color: #aaa;
+        }
+
+        .status-planned {
+            background: rgba(61, 123, 255, 0.2);
+            color: #3d7bff;
+        }
+
+        .status-received {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+
+        .status-lifted {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1c2433;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #2f3340;
+            background: #0f1320;
+            color: #fff;
+            box-sizing: border-box;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #2f3340;
+            background: #0f1320;
+            color: #fff;
+            box-sizing: border-box;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-save {
+            flex: 1;
+            padding: 12px;
+            background: #3d7bff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: #2f3340;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
     </style>
-  </head>
-  <body>
-    <div class="section">
-      <div class="card">
-        <div class="row" style="flex-wrap:wrap;">
-          <div class="app-title">構件管理</div>
-          <a class="btn" href="index.html">返回主畫面</a>
-        </div>
+</head>
 
-        <div class="tools" style="margin-top:8px; gap:8px; flex-wrap:wrap;">
-          <input id="mq" class="btn" placeholder="搜尋：編號/規格/材質/位置/重量/數量" style="flex:1 1 100%; min-width:240px;" />
-        </div>
-
-        <div style="margin-top:12px;">
-          <div class="muted">單筆新增構件</div>
-          <div class="form" style="margin-top:8px;">
-            <label>構件編號<input id="sid" class="btn" placeholder="例如 A-001" /></label>
-            <label>構件位置<input id="sposition" class="btn" placeholder="例如 0/A" /></label>
-            <label>構件重量<input id="sweight" class="btn" placeholder="數值，可含千分位" /></label>
-            <label>構件數量<input id="squantity" class="btn" placeholder="例如 10" /></label>
-            <label>構件規格<input id="sspec" class="btn" placeholder="例如 PL-25*500*650" /></label>
-            <button id="singleAdd" class="btn primary">新增一筆</button>
-          </div>
-          <div class="muted-sm" style="margin-top:8px;">新增後，會合併到構件庫（以構件編號為唯一鍵）。</div>
-        </div>
-
-        <div class="row" style="margin-top:16px;">
-          <div class="muted">構件狀態管理</div>
-        </div>
-        <div id="manageList" class="list" style="margin-top:8px;"></div>
-      </div>
+<body>
+    <div class="header-row">
+        <div class="header-title">構件管理</div>
+        <a href="index.html" class="back-btn">返回主畫面</a>
     </div>
-    <button class="btn fab-top" id="toTopManage">↑</button>
-
-    <script src="back.js?v=V6.1"></script>
-    <script>
-      const get=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
-      const set=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
-      const fmt2=(v)=>{
-        const n=Number(String(v||'').replace(/,/g,''));
-        return Number.isFinite(n)? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(v||'');
-      };
-      const num=(v)=>{ const t=String(v||'').replace(/,/g,'').trim(); const n=Number(t); return Number.isFinite(n)? Math.round(n*100)/100 : ''; };
-      const today=()=>get('todayRecords', []);
-      const planned=()=>get('plannedItems', []);
-      const libs=()=>get('componentsLibrary', []);
-
-      function saveMerged(items){
-        const prev=libs(); const map=new Map(prev.map(x=>[String(x.id), x]));
-        items.forEach(x=>{
-          if(!x.id) return;
-          const key=String(x.id);
-          const existing=map.get(key) || {};
-          const base={
-            id:key,
-            spec: existing.spec || '',
-            material: existing.material || '',
-            weight: existing.weight!==undefined? existing.weight : '',
-            area: existing.area!==undefined? existing.area : '',
-            position: existing.position || '',
-            quantity: existing.quantity!==undefined? existing.quantity : ''
-          };
-          if(x.spec!==undefined && String(x.spec).trim()!=='') base.spec=String(x.spec);
-          if(x.position!==undefined && String(x.position).trim()!=='') base.position=String(x.position);
-          if(x.weight!==undefined && x.weight!=='') base.weight=num(x.weight);
-          if(x.material!==undefined && String(x.material).trim()!=='') base.material=String(x.material);
-          if(x.area!==undefined && x.area!=='') base.area=num(x.area);
-          if(x.quantity!==undefined && x.quantity!=='') base.quantity=num(x.quantity);
-          map.set(key, base);
-        });
-        set('componentsLibrary', Array.from(map.values()));
-      }
-
-
-
-      function applyStatus(id, position, status, plannedAt){
-        // 清理舊紀錄（依構件編號+位置）
-        let t=today(); let p=planned();
-        const pos = String(position||'');
-        if(status!=="used"){
-          t=t.filter(x=> !(String(x.id)===String(id) && String(x.position||'')===String(pos)) );
-          p=p.filter(x=> !(String(x.id)===String(id) && String(x.position||'')===String(pos)) );
-        }
-        if(status==='scheduled'){
-          if(!plannedAt){ alert('請填入預計到貨日期 (YYYY-MM-DD)'); return false; }
-          p.push({ id:String(id), plannedAt:String(plannedAt), status:'scheduled', position: pos });
-        } else if(status==='pending'){
-          t.push({ id:String(id), position: pos, plannedAt: plannedAt || '', actualAt:'', status:'pending' });
-        } else if(status==='received'){
-          const now=new Date();
-          const ts= now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-          t.push({ id:String(id), position: pos, plannedAt: plannedAt || '', actualAt: ts, status:'received' });
-        } else if(status==='used'){
-          let used=get('usedRecords', [])||[];
-          used=used.filter(u=> !(String(u?.id)===String(id) && String(u?.position||'')===String(pos)) );
-          const libItem = libs().find(r=> String(r.id)===String(id) && String(r.position||'')===String(pos) ) || {};
-          const qty=Number(libItem?.quantity)||1;
-          const dateOnly=(plannedAt && plannedAt.length)? plannedAt : new Date().toISOString().slice(0,10);
-          const ts=new Date().toLocaleString();
-          used.push({ id:String(id), position: pos, qty:qty, usedQty:qty, usedAt:ts, usedAtDate:dateOnly });
-          set('usedRecords', used);
-        } else {
-          // 未設定：僅移除任何既有狀態
-        }
-        set('todayRecords', t); set('plannedItems', p);
-        return true;
-      }
-
-      function currentStatusMap(){
-        const map=new Map();
-        planned().forEach(r=>{ 
-          const key = `${String(r.id)}|${String(r.position||'')}`;
-          map.set(key, { status:r.status||'scheduled', plannedAt:r.plannedAt||'', position: r.position||'' }); 
-        });
-        today().forEach(r=>{ 
-          const key = `${String(r.id)}|${String(r.position||'')}`;
-          map.set(key, { status:r.status, plannedAt:r.plannedAt||'', position: r.position||'' }); 
-        });
-        const usedRecs=(get('usedRecords', [])||[]);
-        usedRecs.forEach(u=>{
-          const key = `${String(u.id)}|${String(u.position||'')}`;
-          map.set(key, { status:'used', plannedAt:String(u.usedAtDate||''), position: String(u.position||'') });
-        });
-        return map;
-      }
-
-      function renderManage(){
-        const list=document.getElementById('manageList'); list.innerHTML='';
-        const q=(document.getElementById('mq')?.value||'').trim().toUpperCase();
-        const all=libs().filter(x=>{
-          if(!q) return true;
-          const fields=[x.id,x.spec,x.material,x.position,x.weight,x.quantity].map(v=>String(v||'').toUpperCase());
-          return fields.some(f=>f.includes(q));
-        }).slice().sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-        const stat=currentStatusMap();
-        if(all.length===0){ list.innerHTML='<div class="muted">構件庫目前為空，請先新增構件</div>'; return; }
-        all.forEach(item=>{
-          const row=document.createElement('div'); row.className='list-item row-toggle';
-          row.innerHTML=`
-            <div>${item.id}</div>
-            <div class="muted">${item.spec||'-'}</div>
-            <div class="muted">${fmt2(item.quantity)||'-'}</div>
-            <div class="muted">${item.position||'-'}</div>
-          `;
-          const details=document.createElement('div'); details.className='details';
-          details.innerHTML=`
-            <div class="inline">
-              <select class="btn statusSel" style="min-width:140px">
-                <option value="">未設定</option>
-                <option value="pending">未進料</option>
-                <option value="scheduled">預定中</option>
-                <option value="received">已進料</option>
-                <option value="used">已使用</option>
-              </select>
-              <input class="btn dateInput" type="date" placeholder="YYYY-MM-DD" style="min-width:160px" />
-              <button class="btn primary applyBtn">更新</button>
-              <button class="btn danger delBtn">刪除此構件</button>
+    <div class="search-bar">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜尋構件編號或位置...">
+        <select class="sort-select" id="sortSelect">
+            <option value="id_asc">編號 (A-Z)</option>
+            <option value="id_desc">編號 (Z-A)</option>
+            <option value="pos_asc">位置 (A-Z)</option>
+            <option value="pos_desc">位置 (Z-A)</option>
+            <option value="status_asc">狀態 (未進料 -> 已吊裝)</option>
+            <option value="status_desc">狀態 (已吊裝 -> 未進料)</option>
+        </select>
+    </div>
+    <div class="component-list" id="componentList"></div>
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">編輯構件</div>
+            <div class="form-group">
+                <label class="form-label">構件編號 (Item ID)</label>
+                <input type="text" class="form-input" id="editItemId" readonly
+                    style="opacity: 0.7; cursor: not-allowed;">
             </div>
-            <div class="muted-sm">點選列可展開設定；更新後即時影響進料紀錄與構件庫狀態。</div>
-          `;
-          const wrap=document.createElement('div'); wrap.appendChild(row); wrap.appendChild(details);
-          const sel=details.querySelector('.statusSel');
-          const date=details.querySelector('.dateInput');
-          const btn=details.querySelector('.applyBtn');
-          const del=details.querySelector('.delBtn');
-          const key = `${String(item.id)}|${String(item.position||'')}`;
-          const cur=stat.get(key);
-          if(cur){ sel.value=cur.status||''; date.value=cur.plannedAt||''; }
-          btn.addEventListener('click',()=>{
-            const ok=applyStatus(item.id, item.position||'', sel.value, (date.value||'').trim());
-            if(ok){ details.classList.remove('open'); renderManage(); }
-          });
-          del.addEventListener('click',()=>{
-            if(!confirm('確定要刪除此構件？')) return;
-            if(!confirm('再次確認：刪除後不可復原，是否繼續？')) return;
-            deleteComponent(item.id, item.position||'');
-            details.classList.remove('open');
-            renderManage();
-          });
-          row.addEventListener('click',()=>{ details.classList.toggle('open'); });
-          list.appendChild(wrap);
+            <div class="form-group">
+                <label class="form-label">位置 (Position)</label>
+                <input type="text" class="form-input" id="editPosition" readonly
+                    style="opacity: 0.7; cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+                <label class="form-label">規格 (Spec)</label>
+                <input type="text" class="form-input" id="editSpec">
+            </div>
+            <div class="form-group">
+                <label class="form-label">材質 (Material)</label>
+                <input type="text" class="form-input" id="editMaterial">
+            </div>
+            <div class="form-group">
+                <label class="form-label">重量 (Weight)</label>
+                <input type="number" class="form-input" id="editWeight">
+            </div>
+            <div class="form-group">
+                <label class="form-label">數量 (Qty)</label>
+                <input type="number" class="form-input" id="editQty">
+            </div>
+            <div class="form-group">
+                <label class="form-label">狀態 (Status)</label>
+                <select class="form-select" id="editStatus">
+                    <option value="unplanned">未進料 (Unplanned)</option>
+                    <option value="planned">已登記 (Planned)</option>
+                    <option value="received">已進料 (Received)</option>
+                    <option value="lifted">已吊裝 (Lifted)</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn-save" onclick="saveChanges()">儲存變更</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="back.js"></script>
+    <script>
+        const db = window.supabaseClient;
+        let allComponents = [], plannedItems = [], confirmedItems = [], finishedItems = [], currentEditingItem = null;
+        let displayedCount = 0;
+        const ITEMS_PER_PAGE = 100;
+        let currentFiltered = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadData();
+            document.getElementById("searchInput").addEventListener("input", () => renderList(true));
+            document.getElementById("sortSelect").addEventListener("change", () => renderList(true));
+
+            // Add scroll listener for infinite scroll
+            const container = document.getElementById('componentList');
+            container.addEventListener('scroll', () => {
+                if (container.scrollTop + container.clientHeight >= container.scrollHeight - 50) {
+                    if (displayedCount < currentFiltered.length) {
+                        renderList(false);
+                    }
+                }
+            });
         });
-      }
 
-      function deleteComponent(id, position){
-        const match=(x)=> String(x.id)===String(id) && String(x.position||'')===String(position||'');
-        const libNext = libs().filter(x=> !match(x));
-        const planNext = planned().filter(x=> !match(x));
-        const todayNext = today().filter(x=> !match(x));
-        const usedNext = (get('usedRecords', [])||[]).filter(x=> !match(x));
-        set('componentsLibrary', libNext);
-        set('plannedItems', planNext);
-        set('todayRecords', todayNext);
-        set('usedRecords', usedNext);
-        return true;
-      }
+        async function loadData() {
+            if (!db) return;
+            document.getElementById("componentList").innerHTML = '<div style="text-align:center; padding:20px;">載入中...</div>';
+            const [componentsRes, plannedRes, confirmedRes, finishedRes] = await Promise.all([
+                db.from("components").select("*"),
+                db.from("planned").select("*"),
+                db.from("confirm").select("*"),
+                db.from("finished").select("*")
+            ]);
+            allComponents = componentsRes.data || [];
+            plannedItems = plannedRes.data || [];
+            confirmedItems = confirmedRes.data || [];
+            finishedItems = finishedRes.data || [];
+            renderList(true);
+        }
 
-      // 事件與初始化
-      document.getElementById('singleAdd').addEventListener('click',()=>{
-        const id=document.getElementById('sid').value.trim(); if(!id){ alert('請填寫構件編號'); return; }
-        const position=document.getElementById('sposition').value.trim();
-        const weight=num(document.getElementById('sweight').value.trim());
-        const quantity=num(document.getElementById('squantity').value.trim());
-        const spec=document.getElementById('sspec').value.trim();
-        saveMerged([{ id, position, weight, spec, quantity }]);
-        document.getElementById('sid').value=''; document.getElementById('sposition').value=''; document.getElementById('sweight').value=''; document.getElementById('squantity').value=''; document.getElementById('sspec').value='';
-        renderManage();
-      });
+        function getStatus(item) {
+            return finishedItems.some(f => f.item_id === item.item_id && f.position === item.position) ? "lifted" :
+                confirmedItems.some(c => c.item_id === item.item_id && c.position === item.position) ? "received" :
+                    plannedItems.some(p => p.item_id === item.item_id && p.position === item.position) ? "planned" : "unplanned"
+        }
 
-      (function setupSearch(){
-        const input=document.getElementById('mq');
-        if(input) input.addEventListener('input', ()=>{ input.value = input.value.toUpperCase(); renderManage(); });
-        const sid=document.getElementById('sid'); const spos=document.getElementById('sposition');
-        if(sid) sid.addEventListener('blur', ()=>{ sid.value = sid.value.toUpperCase(); });
-        if(spos) spos.addEventListener('blur', ()=>{ spos.value = spos.value.toUpperCase(); });
-      })();
+        function getStatusText(status) {
+            switch (status) {
+                case "lifted": return "已吊裝";
+                case "received": return "已進料";
+                case "planned": return "已登記";
+                default: return "未進料"
+            }
+        }
 
-      renderManage();
-      (function(){ const b=document.getElementById('toTopManage'); if(!b) return; b.addEventListener('click',()=>{ window.scrollTo({ top:0, behavior:'smooth' }); }); const onScroll=()=>{ b.style.display = window.scrollY>200 ? 'inline-flex' : 'none'; }; window.addEventListener('scroll', onScroll); onScroll(); })();
+        function getStatusWeight(status) {
+            switch (status) {
+                case "lifted": return 3;
+                case "received": return 2;
+                case "planned": return 1;
+                default: return 0;
+            }
+        }
+
+        function renderList(reset = false) {
+            const filter = document.getElementById("searchInput").value;
+            const sort = document.getElementById("sortSelect").value;
+            const container = document.getElementById("componentList");
+
+            if (reset) {
+                container.innerHTML = "";
+                displayedCount = 0;
+
+                // Filter and sort only on reset
+                currentFiltered = allComponents.filter(c => (c.item_id || "").toLowerCase().includes(filter.toLowerCase()) || (c.position || "").toLowerCase().includes(filter.toLowerCase()));
+
+                currentFiltered.sort((a, b) => {
+                    const statusA = getStatus(a);
+                    const statusB = getStatus(b);
+
+                    switch (sort) {
+                        case "id_asc": return (a.item_id || "").localeCompare(b.item_id || "");
+                        case "id_desc": return (b.item_id || "").localeCompare(a.item_id || "");
+                        case "pos_asc": return (a.position || "").localeCompare(b.position || "");
+                        case "pos_desc": return (b.position || "").localeCompare(a.position || "");
+                        case "status_asc": return getStatusWeight(statusA) - getStatusWeight(statusB);
+                        case "status_desc": return getStatusWeight(statusB) - getStatusWeight(statusA);
+                        default: return 0;
+                    }
+                });
+            }
+
+            if (currentFiltered.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#777; padding:20px;">找不到符合的構件</div>';
+                return;
+            }
+
+            const itemsToShow = currentFiltered.slice(displayedCount, displayedCount + ITEMS_PER_PAGE);
+            itemsToShow.forEach(item => {
+                const status = getStatus(item);
+                const div = document.createElement("div");
+                div.className = "component-item";
+                div.onclick = () => openModal(item);
+                div.innerHTML = `<div class="item-info"><div class="item-id">${item.item_id} - ${item.position}</div><div class="item-detail">${item.spec || "-"} | ${item.weight}kg</div></div><div class="item-status status-${status}">${getStatusText(status)}</div>`;
+                container.appendChild(div);
+            });
+
+            displayedCount += itemsToShow.length;
+
+            // Remove old loading indicator if exists
+            const oldLoading = document.getElementById('loadingMsg');
+            if (oldLoading) oldLoading.remove();
+
+            // Add loading indicator if more items available
+            if (displayedCount < currentFiltered.length) {
+                const loadingMsg = document.createElement('div');
+                loadingMsg.id = 'loadingMsg';
+                loadingMsg.style.textAlign = 'center';
+                loadingMsg.style.color = '#aaa';
+                loadingMsg.style.padding = '20px';
+                loadingMsg.innerText = `滾動載入更多... (${displayedCount}/${currentFiltered.length})`;
+                container.appendChild(loadingMsg);
+            }
+        }
+
+        function openModal(item) {
+            currentEditingItem = item;
+            const status = getStatus(item);
+            document.getElementById("editItemId").value = item.item_id;
+            document.getElementById("editPosition").value = item.position;
+            document.getElementById("editSpec").value = item.spec || "";
+            document.getElementById("editMaterial").value = item.material || "";
+            document.getElementById("editWeight").value = item.weight || 0;
+            document.getElementById("editQty").value = item.qty || 1;
+            document.getElementById("editStatus").value = status;
+            document.getElementById("editModal").classList.add("show");
+        }
+
+        function closeModal() {
+            document.getElementById("editModal").classList.remove("show");
+            currentEditingItem = null;
+        }
+
+        async function saveChanges() {
+            if (!currentEditingItem || !db) return;
+            const itemId = document.getElementById("editItemId").value;
+            const position = document.getElementById("editPosition").value;
+            const newSpec = document.getElementById("editSpec").value;
+            const newMaterial = document.getElementById("editMaterial").value;
+            const newWeight = document.getElementById("editWeight").value;
+            const newQty = document.getElementById("editQty").value;
+            const newStatus = document.getElementById("editStatus").value;
+            const oldStatus = getStatus(currentEditingItem);
+
+            const btn = document.querySelector(".btn-save");
+            const originalText = btn.textContent;
+            btn.textContent = "儲存中...";
+            btn.disabled = true;
+
+            try {
+                const { error: updateError } = await db.from("components").update({ spec: newSpec, material: newMaterial, weight: newWeight, qty: newQty }).eq("item_id", itemId).eq("position", position);
+                if (updateError) throw updateError;
+
+                if (newStatus !== oldStatus) {
+                    const now = new Date().toISOString();
+                    const today = new Date().toISOString().split("T")[0];
+                    const getCreatedAt = list => { const existing = list.find(i => i.item_id === itemId && i.position === position); return existing ? existing.created_at : now };
+                    const plannedCreatedAt = getCreatedAt(plannedItems);
+                    const confirmCreatedAt = getCreatedAt(confirmedItems);
+                    const finishedCreatedAt = getCreatedAt(finishedItems);
+                    const commonData = { item_id: itemId, position: position, qty: newQty };
+
+                    if ("unplanned" === newStatus) {
+                        await Promise.all([
+                            db.from("planned").delete().eq("item_id", itemId).eq("position", position),
+                            db.from("confirm").delete().eq("item_id", itemId).eq("position", position),
+                            db.from("finished").delete().eq("item_id", itemId).eq("position", position)
+                        ]);
+                    } else if ("planned" === newStatus) {
+                        const existingPlanned = plannedItems.find(i => i.item_id === itemId && i.position === position);
+                        existingPlanned ? await db.from("planned").update({ qty: newQty, received_at: null }).eq("item_id", itemId).eq("position", position) : await db.from("planned").insert({ ...commonData, planned_date: today, created_at: now, received_at: null });
+                        await Promise.all([
+                            db.from("confirm").delete().eq("item_id", itemId).eq("position", position),
+                            db.from("finished").delete().eq("item_id", itemId).eq("position", position)
+                        ]);
+                    } else if ("received" === newStatus) {
+                        const existingPlanned = plannedItems.find(i => i.item_id === itemId && i.position === position);
+                        existingPlanned ? await db.from("planned").upsert({ ...commonData, planned_date: existingPlanned.planned_date || today, created_at: plannedCreatedAt, received_at: now }, { onConflict: "item_id,position" }) : await db.from("planned").upsert({ ...commonData, planned_date: today, created_at: now, received_at: now }, { onConflict: "item_id,position" });
+                        await db.from("confirm").upsert({ ...commonData, planned_date: today, created_at: confirmCreatedAt, lifted_at: null }, { onConflict: "item_id,position" });
+                        await db.from("finished").delete().eq("item_id", itemId).eq("position", position);
+                    } else if ("lifted" === newStatus) {
+                        const existingPlanned = plannedItems.find(i => i.item_id === itemId && i.position === position);
+                        const existingConfirm = confirmedItems.find(i => i.item_id === itemId && i.position === position);
+                        await db.from("planned").upsert({ ...commonData, planned_date: existingPlanned && existingPlanned.planned_date ? existingPlanned.planned_date : today, created_at: existingPlanned ? plannedCreatedAt : now, received_at: existingPlanned && existingPlanned.received_at ? existingPlanned.received_at : now }, { onConflict: "item_id,position" });
+                        await db.from("confirm").upsert({ ...commonData, planned_date: existingConfirm && existingConfirm.planned_date ? existingConfirm.planned_date : today, created_at: existingConfirm ? confirmCreatedAt : now, lifted_at: now }, { onConflict: "item_id,position" });
+                        await db.from("finished").upsert({ ...commonData, planned_date: today, confirmed_date: today, created_at: finishedCreatedAt }, { onConflict: "item_id,position" });
+                    }
+                }
+                alert("儲存成功！");
+                closeModal();
+                loadData();
+            } catch (err) {
+                console.error("Save error:", err);
+                alert("儲存失敗：" + err.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
     </script>
-  </body>
+    <script src="backToTop.js"></script>
+</body>
+
 </html>

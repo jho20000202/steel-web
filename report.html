@@ -1,168 +1,414 @@
-<!doctype html>
-<html lang="zh-Hant">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <title>報表匯出</title>
-    <link rel="stylesheet" href="styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  </head>
-  <body>
-    <div class="section">
-      <div class="card">
-        <div class="row" style="flex-wrap:wrap;">
-          <div class="app-title">報表匯出</div>
-          <a class="btn" href="index.html">返回主畫面</a>
-        </div>
-        <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
-          <button class="btn primary" id="excel">匯出 Excel</button>
-          <button class="btn" id="exportDevice">匯出到手機</button>
-          <button class="btn" id="previewXLSX">預覽 Excel</button>
-          <button class="btn" id="csv">匯出 CSV</button>
-          <button class="btn" id="exportGoogle">匯出到 Google</button>
-          <button class="btn" id="downloads">最近匯出</button>
-        </div>
-        <div class="muted" style="margin-top:8px;">匯出資料範圍：構件庫＋登記資料（含進/使用/進度）</div>
-      </div>
-    </div>
-    <script src="back.js"></script>
-    <script src="vendor/xlsx.full.min.js"></script>
-    <script>
-      document.getElementById('excel').addEventListener('click', ()=>{
-        if (window.__exportExcel) window.__exportExcel();
-        else fallback('excel');
-      });
-      document.getElementById('csv').addEventListener('click', ()=>{
-        if (window.__exportCSV) window.__exportCSV();
-        else fallback('csv');
-      });
-      document.getElementById('downloads').addEventListener('click', ()=>{ if(window.showDownloads) window.showDownloads(); });
-      document.getElementById('previewXLSX').addEventListener('click', async ()=>{
-        try {
-          const get=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
-          const libs = get('componentsLibrary', []);
-          const today = get('todayRecords', []);
-          const planned = get('plannedItems', []);
-          const used = get('usedRecords', []);
-          const key = (x)=> `${String(x.id)}|${String(x.position||'')}`;
-          const stat = new Map(); planned.forEach(r=>{ stat.set(key(r), { status:r.status||'scheduled', plannedAt:r.plannedAt||'', actualAt:'' }); }); today.forEach(r=>{ stat.set(key(r), { status:r.status||'', plannedAt:r.plannedAt||'', actualAt:r.actualAt||'' }); });
-          const latestUsed = new Map(); used.forEach(u=>{ const k=`${String(u.id)}|${String(u.position||'')}`; const t=String(u.usedAt||''); const prev=latestUsed.get(k)||''; const pd=(used||[]).find(x=>`${String(x.id)}|${String(x.position||'')}`===k && String(x.usedAt)===prev)?.usedAtDate || ''; const nd = u.usedAtDate || ''; if(!prev || (nd && pd && nd>pd)) latestUsed.set(k, t); else latestUsed.set(k, t); });
-          const num = (v)=>{ const n=Number(String(v??'').replace(/,/g,'')); return Number.isFinite(n)?n:0; };
-          const recKeys = new Set(today.filter(r=>r.status==='received').map(r=> `${String(r.id)}|${String(r.position||'')}`));
-          const usedSumByKey = (()=>{ const m=new Map(); (used||[]).forEach(u=>{ const k=`${String(u.id)}|${String(u.position||'')}`; m.set(k,(m.get(k)||0)+num(u.qty ?? u.quantity ?? u.usedQty)); }); return m; })();
-          const rows = libs.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id))).map(item=>{ const k = key(item); const s = stat.get(k) || {}; const isDate = /\d{4}-\d{2}-\d{2}/.test(String(s.plannedAt||'')); const recTime = (isDate? String(s.plannedAt) : '') + (s.actualAt? (isDate? ` ${s.actualAt}` : String(s.actualAt)) : ''); const useTime = latestUsed.get(`${String(item.id)}|${String(item.position||'')}`) || ''; const statusLabel = (useTime && String(useTime).trim()!=='') ? '已使用' : (s.status==='received' ? '已進料' : ''); const qty = num(item.quantity); const usedQty = Math.min(usedSumByKey.get(k)||0, qty); const recvPct = qty ? (recKeys.has(k) ? 100 : 0) : 0; const usedPct = qty ? Math.round(usedQty*100/qty) : 0; return ['構件編號', item.id || '', '規格', item.spec || '', '位置', item.position || '', '重量', (item.weight!==undefined? item.weight : ''), '數量', (item.quantity!==undefined? item.quantity : ''), '狀態', statusLabel, '進料時間', recTime, '使用時間', useTime, '進料進度', `${recvPct}%`, '使用進度', `${usedPct}%`]; });
-          const ws = XLSX.utils.aoa_to_sheet([['報表'], ...rows]); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '報表'); const data = XLSX.write(wb, { bookType:'xlsx', type:'array' }); const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-          if (window.showExcelPreview) window.showExcelPreview(blob, 'report.xlsx');
-        } catch (e) { alert('預覽失敗：'+(e?.message||e)); }
-      });
+<!DOCTYPE html>
+<html lang="zh-TW">
 
-      document.getElementById('exportGoogle').addEventListener('click', async ()=>{
-        try {
-          const get=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
-          const libs = get('componentsLibrary', []);
-          const today = get('todayRecords', []);
-          const planned = get('plannedItems', []);
-          const used = get('usedRecords', []);
-          const key = (x)=> `${String(x.id)}|${String(x.position||'')}`;
-          const stat = new Map(); planned.forEach(r=>{ stat.set(key(r), { status:r.status||'scheduled', plannedAt:r.plannedAt||'', actualAt:'' }); }); today.forEach(r=>{ stat.set(key(r), { status:r.status||'', plannedAt:r.plannedAt||'', actualAt:r.actualAt||'' }); });
-          const latestUsed = new Map(); used.forEach(u=>{ const k=`${String(u.id)}|${String(u.position||'')}`; const t=String(u.usedAt||''); const prev=latestUsed.get(k)||''; const pd=(used||[]).find(x=>`${String(x.id)}|${String(x.position||'')}`===k && String(x.usedAt)===prev)?.usedAtDate || ''; const nd = u.usedAtDate || ''; if(!prev || (nd && pd && nd>pd)) latestUsed.set(k, t); else latestUsed.set(k, t); });
-          const num = (v)=>{ const n=Number(String(v??'').replace(/,/g,'')); return Number.isFinite(n)?n:0; };
-          const recKeys = new Set(today.filter(r=>r.status==='received').map(r=> `${String(r.id)}|${String(r.position||'')}`));
-          const usedSumByKey = (()=>{ const m=new Map(); (used||[]).forEach(u=>{ const k=`${String(u.id)}|${String(u.position||'')}`; m.set(k,(m.get(k)||0)+num(u.qty ?? u.quantity ?? u.usedQty)); }); return m; })();
-          const rows = libs.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id))).map(item=>{ const k = key(item); const s = stat.get(k) || {}; const isDate = /\d{4}-\d{2}-\d{2}/.test(String(s.plannedAt||'')); const recTime = (isDate? String(s.plannedAt) : '') + (s.actualAt? (isDate? ` ${s.actualAt}` : String(s.actualAt)) : ''); const useTime = latestUsed.get(`${String(item.id)}|${String(item.position||'')}`) || ''; const statusLabel = (useTime && String(useTime).trim()!=='') ? '已使用' : (s.status==='received' ? '已進料' : ''); const qty = num(item.quantity); const usedQty = Math.min(usedSumByKey.get(k)||0, qty); const recvPct = qty ? (recKeys.has(k) ? 100 : 0) : 0; const usedPct = qty ? Math.round(usedQty*100/qty) : 0; return ['構件編號', item.id || '', '規格', item.spec || '', '位置', item.position || '', '重量', (item.weight!==undefined? item.weight : ''), '數量', (item.quantity!==undefined? item.quantity : ''), '狀態', statusLabel, '進料時間', recTime, '使用時間', useTime, '進料進度', `${recvPct}%`, '使用進度', `${usedPct}%`]; });
-          const ws = XLSX.utils.aoa_to_sheet([['報表'], ...rows]); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '報表'); const data = XLSX.write(wb, { bookType:'xlsx', type:'array' }); const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-          // 先嘗試 Google 直傳
-          if (window.GoogleAuth) {
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>報表匯出</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            padding: 20px;
+            background: #0f1320;
+            color: #fff;
+            font-family: sans-serif;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #2f3340;
+            color: #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #3e4452;
+        }
+
+        .filter-section {
+            background: #1c2433;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .input-box,
+        select {
+            padding: 12px;
+            border-radius: 10px;
+            background: #2a2b31;
+            border: 1px solid #3e414b;
+            color: #fff;
+            font-size: 15px;
+            min-width: 150px;
+        }
+
+        .input-box:focus,
+        select:focus {
+            outline: none;
+            border-color: #3d7bff;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+            color: #fff;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: #3d7bff;
+        }
+
+        .btn-primary:hover {
+            background: #2a65e6;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: #1c2433;
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #2f3340;
+        }
+
+        th {
+            color: #aaa;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        td {
+            color: #eee;
+            font-size: 15px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-planned {
+            background: #007bff;
+            color: #fff;
+        }
+
+        .status-received {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .status-lifted {
+            background: #6f42c1;
+            color: #fff;
+        }
+
+        .status-none {
+            background: #6c757d;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-row">
+        <div class="header-title">報表匯出</div>
+        <a href="index.html" class="back-btn">返回主畫面</a>
+    </div>
+
+    <div class="filter-section">
+        <div class="input-group">
+            <label>報表類型</label>
+            <select id="reportType">
+                <option value="all">完整構件資料</option>
+                <option value="received_today">本日進料內容</option>
+                <option value="lifted_today">本日吊裝內容</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>日期選擇</label>
+            <input type="date" id="filterDate" class="input-box">
+        </div>
+        <button class="btn btn-primary" onclick="generateReport()">查詢預覽</button>
+        <div style="flex: 1;"></div>
+        <button class="btn btn-success" onclick="exportExcel()">匯出 Excel</button>
+        <button class="btn btn-info" onclick="exportCSV()">匯出 CSV</button>
+    </div>
+
+    <div class="table-container">
+        <div id="loading" style="display: none; text-align: center; padding: 20px; color: #aaa;">載入中...</div>
+        <table id="reportTable">
+            <thead>
+                <tr id="tableHeader">
+                    <!-- Headers will be injected here -->
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data will be injected here -->
+            </tbody>
+        </table>
+        <div id="noData" style="display: none; text-align: center; padding: 20px; color: #aaa;">無符合資料</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="back.js"></script>
+    <script>
+        const db = window.supabaseClient;
+        let currentData = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('filterDate').valueAsDate = new Date();
+        });
+
+        async function generateReport() {
+            const type = document.getElementById('reportType').value;
+            const date = document.getElementById('filterDate').value;
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('tableBody').innerHTML = '';
+            document.getElementById('noData').style.display = 'none';
+
             try {
-              if (!GoogleAuth.isLogged()) { await GoogleAuth.login(); }
-              const folderId = (localStorage.getItem('google:folderId')? JSON.parse(localStorage.getItem('google:folderId')):'');
-              const meta = await GoogleAuth.uploadFile('report.xlsx', blob, blob.type, folderId);
-              const link = meta?.webViewLink || '';
-              if (window.showExportToast) window.showExportToast('report.xlsx', link);
-              try { if (link) window.open(link, '_blank'); } catch {}
-              return;
-            } catch {}
-          }
-          const ok = await (window.saveBlobWithPicker ? window.saveBlobWithPicker(blob, 'report.xlsx') : false);
-          if (!ok) alert('裝置不支援原生儲存');
-        } catch (e) { alert('匯出至 Google 失敗：'+(e?.message||e)); }
-      });
-      async function fallback(type){
-        const get=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}};
-        const libs = get('componentsLibrary', []);
-        const today = get('todayRecords', []);
-        const planned = get('plannedItems', []);
-        const used = get('usedRecords', []);
-        const key = (x)=> `${String(x.id)}|${String(x.position||'')}`;
-        const stat = new Map();
-        planned.forEach(r=>{ stat.set(key(r), { status:r.status||'scheduled', plannedAt:r.plannedAt||'', actualAt:'' }); });
-        today.forEach(r=>{ stat.set(key(r), { status:r.status||'', plannedAt:r.plannedAt||'', actualAt:r.actualAt||'' }); });
-        const latestUsed = new Map();
-        used.forEach(u=>{
-          const k=`${String(u.id)}|${String(u.position||'')}`;
-          const t=String(u.usedAt||'');
-          const prev=latestUsed.get(k)||'';
-          const pd = (used||[]).find(x=>`${String(x.id)}|${String(x.position||'')}`===k && String(x.usedAt)===prev)?.usedAtDate || '';
-          const nd = u.usedAtDate || '';
-          if(!prev || (nd && pd && nd>pd)) latestUsed.set(k, t); else latestUsed.set(k, t);
-        });
-        // 工具
-        const num = (v)=>{ const n=Number(String(v??'').replace(/,/g,'')); return Number.isFinite(n)?n:0; };
-        const recKeys = new Set(today.filter(r=>r.status==='received').map(r=> `${String(r.id)}|${String(r.position||'')}`));
-        const usedSumByKey = (()=>{
-          const m=new Map();
-          (used||[]).forEach(u=>{
-            const k=`${String(u.id)}|${String(u.position||'')}`;
-            m.set(k,(m.get(k)||0)+num(u.qty ?? u.quantity ?? u.usedQty));
-          });
-          return m;
-        })();
-        const rows = libs.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id))).map(item=>{
-          const k = key(item);
-          const s = stat.get(k) || {};
-          // 進料時間：以 plannedAt(日期)+actualAt(時間) 組合；若無日期則僅時間
-          const isDate = /\d{4}-\d{2}-\d{2}/.test(String(s.plannedAt||''));
-          const recTime = (isDate? String(s.plannedAt) : '') + (s.actualAt? (isDate? ` ${s.actualAt}` : String(s.actualAt)) : '');
-          // 使用時間：採用最新的 usedAt（已為日期+時間）
-          const useTime = latestUsed.get(`${String(item.id)}|${String(item.position||'')}`) || '';
-          const statusLabel = (useTime && String(useTime).trim()!=='')
-            ? '已使用'
-            : (s.status==='received' ? '已進料' : '');
-          // 進度（依該構件數量）
-          const qty = num(item.quantity);
-          const usedQty = Math.min(usedSumByKey.get(k)||0, qty);
-          const recvPct = qty ? (recKeys.has(k) ? 100 : 0) : 0;
-          const usedPct = qty ? Math.round(usedQty*100/qty) : 0;
-          return {
-            '構件編號': item.id || '',
-            '構件規格': item.spec || '',
-            '構件重量': (item.weight!==undefined? item.weight : ''),
-            '構件位置': item.position || '',
-            '構件數量': (item.quantity!==undefined? item.quantity : ''),
-            '構件目前狀態': statusLabel,
-            '構件進料時間': recTime,
-            '構件使用時間': useTime,
-            '構件進料進度': `${recvPct}%`,
-            '構件使用進度': `${usedPct}%`
-          };
-        });
-        if(type==='excel'){
-          const ws=XLSX.utils.json_to_sheet(rows);
-          const wb=XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, '報表');
-          const data = XLSX.write(wb, { bookType:'xlsx', type:'array' });
-          const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-          const saved = await (window.saveBlobWithPicker ? window.saveBlobWithPicker(blob, 'report.xlsx') : false);
-          if (!saved) alert('裝置不支援原生儲存');
-        } else {
-          const header=['構件編號','構件規格','構件重量','構件位置','構件數量','構件目前狀態','構件進料時間','構件使用時間','構件進料進度','構件使用進度'];
-          const csvRows = rows.map(r=> header.map(h=> r[h]??'' ));
-          const csv=[header,...csvRows].map(row=>row.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
-          const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-          const saved = await (window.saveBlobWithPicker ? window.saveBlobWithPicker(blob, 'report.csv') : false);
-          if (!saved) alert('裝置不支援原生儲存');
-      }
-      }
+                // Fetch components library for weight lookup
+                const { data: components, error } = await db.from('components').select('item_id, position, weight');
+                if (error) throw error;
+                const weightMap = new Map(components.map(c => [`${c.item_id}|${c.position}`, c.weight]));
+
+                let data = [];
+                let headers = [];
+
+                if (type === 'all') {
+                    headers = ['構件編號', '位置', '規格', '重量', '狀態', '預計日期', '進料日期', '吊裝日期'];
+                    data = await fetchAllComponentsData(weightMap);
+                } else if (type === 'received_today') {
+                    headers = ['構件編號', '位置', '重量', '數量', '進料日期', '簽收時間'];
+                    data = await fetchReceivedData(date, weightMap);
+                } else if (type === 'lifted_today') {
+                    headers = ['構件編號', '位置', '重量', '數量', '吊裝日期', '完成時間'];
+                    data = await fetchLiftedData(date, weightMap);
+                }
+
+                currentData = data;
+                renderTable(headers, data);
+
+            } catch (error) {
+                console.error('Report generation error:', error);
+                alert('產生報表失敗：' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        async function fetchAllComponentsData(weightMap) {
+            const [compRes, planRes, confRes, finRes] = await Promise.all([
+                db.from('components').select('*'),
+                db.from('planned').select('*'),
+                db.from('confirm').select('*'),
+                db.from('finished').select('*')
+            ]);
+
+            if (compRes.error) throw compRes.error;
+
+            const components = compRes.data || [];
+            const planned = planRes.data || [];
+            const confirm = confRes.data || [];
+            const finished = finRes.data || [];
+
+            return components.map(c => {
+                const p = planned.find(x => x.item_id === c.item_id && x.position === c.position);
+                const cf = confirm.find(x => x.item_id === c.item_id && x.position === c.position);
+                const f = finished.find(x => x.item_id === c.item_id && x.position === c.position);
+
+                let status = '未進料';
+                let statusClass = 'status-none';
+
+                if (f) { status = '已吊裝'; statusClass = 'status-lifted'; }
+                else if (cf) { status = '已進料'; statusClass = 'status-received'; }
+                else if (p) { status = '已登記'; statusClass = 'status-planned'; }
+
+                return {
+                    '構件編號': c.item_id,
+                    '位置': c.position,
+                    '規格': c.spec || '',
+                    '重量': c.weight || 0,
+                    '狀態': `<span class="status-badge ${statusClass}">${status}</span>`,
+                    '預計日期': p?.planned_date || '',
+                    '進料日期': cf?.confirmed_date || '',
+                    '吊裝日期': f?.lifted_date || '',
+                    _rawStatus: status
+                };
+            });
+        }
+
+        async function fetchReceivedData(date, weightMap) {
+            const { data, error } = await db.from('confirm')
+                .select('*')
+                .eq('confirmed_date', date);
+
+            if (error) throw error;
+
+            return (data || []).map(item => ({
+                '構件編號': item.item_id,
+                '位置': item.position,
+                '重量': weightMap.get(`${item.item_id}|${item.position}`) || 0,
+                '數量': item.qty,
+                '進料日期': item.confirmed_date,
+                '簽收時間': new Date(item.created_at).toLocaleString()
+            }));
+        }
+
+        async function fetchLiftedData(date, weightMap) {
+            const { data, error } = await db.from('finished')
+                .select('*')
+                .eq('lifted_date', date);
+
+            if (error) throw error;
+
+            return (data || []).map(item => ({
+                '構件編號': item.item_id,
+                '位置': item.position,
+                '重量': weightMap.get(`${item.item_id}|${item.position}`) || 0,
+                '數量': item.qty,
+                '吊裝日期': item.lifted_date,
+                '完成時間': new Date(item.created_at).toLocaleString()
+            }));
+        }
+
+        function renderTable(headers, data) {
+            const thead = document.getElementById('tableHeader');
+            const tbody = document.getElementById('tableBody');
+
+            thead.innerHTML = headers.map(h => `<th>${h}</th>`).join('');
+
+            if (data.length === 0) {
+                document.getElementById('noData').style.display = 'block';
+                return;
+            }
+
+            tbody.innerHTML = data.map(row => {
+                return `<tr>${headers.map(h => `<td>${row[h] || ''}</td>`).join('')}</tr>`;
+            }).join('');
+        }
+
+        function getExportData() {
+            if (!currentData || currentData.length === 0) {
+                alert('無資料可匯出');
+                return null;
+            }
+            return currentData.map(row => {
+                const newRow = { ...row };
+                if (newRow._rawStatus) {
+                    newRow['狀態'] = newRow._rawStatus;
+                    delete newRow._rawStatus;
+                }
+                return newRow;
+            });
+        }
+
+        function exportExcel() {
+            const data = getExportData();
+            if (!data) return;
+
+            const type = document.getElementById('reportType').options[document.getElementById('reportType').selectedIndex].text;
+            const date = document.getElementById('filterDate').value;
+            const filename = `${type}_${date}.xlsx`;
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Report");
+            XLSX.writeFile(wb, filename);
+        }
+
+        function exportCSV() {
+            const data = getExportData();
+            if (!data) return;
+
+            const type = document.getElementById('reportType').options[document.getElementById('reportType').selectedIndex].text;
+            const date = document.getElementById('filterDate').value;
+            const filename = `${type}_${date}.csv`;
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const csv = XLSX.utils.sheet_to_csv(ws);
+
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
-  </body>
+    <script src="backToTop.js"></script>
+</body>
+
 </html>

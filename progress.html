@@ -1,157 +1,528 @@
-<!doctype html>
-<html lang="zh-Hant">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>進度表</title>
-    <link rel="stylesheet" href="styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    
-  </head>
-  <body>
-    <div class="section">
-      <div class="card">
-        <div class="row" style="flex-wrap:wrap;">
-          <div class="app-title">進度表</div>
-          <a class="btn" href="index.html">返回主畫面</a>
-        </div>
-        <div class="row" style="gap:8px; flex-wrap:nowrap; overflow-x:auto; margin-top:8px;">
-          <select id="dateSel" class="btn" style="min-width:160px; flex:0 0 auto"></select>
-          <button id="applyDate" class="btn" style="flex:0 0 auto">套用</button>
-        </div>
-
-
-        <div class="row" style="margin-top:12px; gap:12px; flex-wrap:wrap; justify-content:center;">
-          <div style="display:flex; flex-direction:column; align-items:center;">
-            <canvas id="chartReceived" width="112" height="112"></canvas>
-            <div class="muted" id="labelReceived" style="margin-top:6px;">已進料 0/0 (0%)</div>
-          </div>
-          <div style="display:flex; flex-direction:column; align-items:center;">
-            <canvas id="chartUsed" width="112" height="112"></canvas>
-            <div class="muted" id="labelUsed" style="margin-top:6px;">已使用 0/0 (0%)</div>
-          </div>
-        </div>
-
-        <div id="progressBars" class="prog" style="margin-top:8px;"></div>
-
-        
-
-        <div id="progressList" class="list" style="margin-top:8px;"></div>
-      </div>
-    </div>
-    
-
-    <script src="back.js"></script>
-    <script src="vendor/xlsx.full.min.js"></script>
-    <script>
-      function get(k,f){ try { return JSON.parse(localStorage.getItem(k)) ?? f } catch { return f } }
-      function set(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
-      const today=()=>{ const arr=get('todayRecords', []); const d=window.__selectedDate||''; return d? arr.filter(r=>String(r.plannedAt||'')===d) : arr; };
-      const libs=()=>get('componentsLibrary', []);
-      const planned=()=>get('plannedItems', []);
-      const used=()=>{ const arr=get('usedRecords', []); const d=window.__selectedDate||''; return d? arr.filter(u=>String(u.usedAtDate||'')===d) : arr; };
-      const isDate=(s)=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''));
-
-      function render(){
-        const list=document.getElementById('progressList'); list.innerHTML='';
-        const t=today();
-        const stat=new Map(t.map(r=>[String(r.id), r]));
-        const all=libs().slice().sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-        if(all.length===0){ list.innerHTML='<div class="muted">構件庫為空</div>'; renderCharts(); renderBars(); return; }
-        all.forEach(item=>{
-          const s=stat.get(String(item.id));
-          const row=document.createElement('div'); row.className='list-item';
-          const zhStatus = s?.status==='received' ? '已進料' : (s?.status==='scheduled' ? '預定中' : (s?.status==='pending' ? '未進料' : (s?.status==='used' ? '已使用' : '-')));
-          const dateForStatus = (function(){
-            const dSel = window.__selectedDate || '';
-            if(s?.status==='received') return dSel || (s?.plannedAt||'');
-            if(s?.status==='scheduled' || s?.status==='pending') return s?.plannedAt || '';
-            return s?.plannedAt || '';
-          })();
-          row.innerHTML=`
-            <div>${item.id}</div>
-            <div class="muted">${item.position||'-'}</div>
-            <div class="muted">${zhStatus}</div>
-            <div class="muted">${dateForStatus||'-'}</div>
-          `;
-          list.appendChild(row);
-          });
-          renderCharts();
-          renderBars();
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            padding: 20px;
+            background: #0f1320;
+            color: #fff;
         }
 
-      function renderCharts(){
-        const num = (v)=>{ const n=Number(String(v??'').replace(/,/g,'')); return Number.isFinite(n)? n : 0; };
-        const libsArr = libs();
-        const totalQty = libsArr.reduce((s,i)=> s + num(i?.quantity), 0);
-        const recKeys = new Set(today().filter(r=>r.status==='received').map(r=> `${String(r.id)}|${String(r.position||'')}`));
-        const recQty = libsArr.reduce((s,i)=> s + (recKeys.has(`${String(i.id)}|${String(i.position||'')}`) ? num(i?.quantity) : 0), 0);
-        const usedQtyRaw = (used()||[]).reduce((s,u)=> s + num(u?.qty ?? u?.quantity ?? u?.usedQty), 0);
-        const usedQty = Math.min(usedQtyRaw, totalQty);
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-        const recRemain = Math.max(totalQty - recQty, 0);
-        const usedRemain = Math.max(totalQty - usedQty, 0);
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
 
-        const recPercent = totalQty? Math.round(recQty*100/totalQty) : 0;
-        const usedPercent = totalQty? Math.round(usedQty*100/totalQty) : 0;
+        .back-btn {
+            padding: 10px 20px;
+            background: #2f3340;
+            color: #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
 
-        const lr = document.getElementById('labelReceived');
-        const lu = document.getElementById('labelUsed');
-        if(lr) lr.textContent = `已進料 ${recQty}/${totalQty} (${recPercent}%)`;
-        if(lu) lu.textContent = `已使用 ${usedQty}/${totalQty} (${usedPercent}%)`;
+        .back-btn:hover {
+            background: #3e4452;
+        }
 
-        const ctxR = document.getElementById('chartReceived')?.getContext('2d');
-        const ctxU = document.getElementById('chartUsed')?.getContext('2d');
-        const cfgR = {
-          type: 'doughnut',
-          data: { datasets: [{ data: [recQty, recRemain], backgroundColor: ['#2f80ed', 'rgba(154,160,166,0.28)'], borderWidth: 0 }] },
-          options: { plugins: { legend: { display: false } }, cutout: '70%', responsive: false }
-        };
-        const cfgU = {
-          type: 'doughnut',
-          data: { datasets: [{ data: [usedQty, usedRemain], backgroundColor: ['#27ae60', 'rgba(154,160,166,0.28)'], borderWidth: 0 }] },
-          options: { plugins: { legend: { display: false } }, cutout: '70%', responsive: false }
-        };
-        if(ctxR){ if(!window._chartReceived){ window._chartReceived = new Chart(ctxR, cfgR); } else { window._chartReceived.data.datasets[0].data=[recQty,recRemain]; window._chartReceived.update(); } }
-        if(ctxU){ if(!window._chartUsed){ window._chartUsed = new Chart(ctxU, cfgU); } else { window._chartUsed.data.datasets[0].data=[usedQty,usedRemain]; window._chartUsed.update(); } }
-      }
+        .search-section {
+            background: #1c2433;
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
 
-      
-      (function setupDate(){
-        const dates = Array.from(new Set([
-          ...get('plannedItems', []).map(p=>p.plannedAt).filter(isDate),
-          ...get('todayRecords', []).map(r=>r.plannedAt).filter(isDate)
-        ])).sort();
-        const sel=document.getElementById('dateSel'); const btn=document.getElementById('applyDate');
-        if(sel){ sel.innerHTML='<option value="">全部日期</option>'+dates.map(d=>`<option value="${d}">${d}</option>`).join(''); }
-        if(btn){ btn.addEventListener('click',()=>{ window.__selectedDate = sel?.value || ''; render(); }); }
-      })();
+        .search-box {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: #2a2b31;
+            border: 1px solid #3e414b;
+            color: #fff;
+            font-size: 15px;
+        }
 
-      
+        .search-box:focus {
+            outline: none;
+            border-color: #3d7bff;
+        }
 
-      render();
-      
+        .search-box::placeholder {
+            color: #777;
+        }
+
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (min-width: 768px) {
+            .progress-section {
+                flex-direction: row;
+            }
+        }
+
+        .stats-card {
+            background: #1c2433;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .progress-circle {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 16px;
+        }
+
+        .progress-svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-bg {
+            fill: none;
+            stroke: #2f3340;
+            stroke-width: 12;
+        }
+
+        .progress-bar {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s;
+        }
+
+        .progress-bar.received {
+            stroke: #28a745;
+        }
+
+        .progress-bar.lifted {
+            stroke: #3d7bff;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 12px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            width: 100%;
+            padding: 0 10%;
+            box-sizing: border-box;
+        }
+
+        .stat-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card {
+            background: #1c2433;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #2f3340;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            border-color: #3d7bff;
+            background: #1e2638;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #3d7bff;
+        }
+
+        .card-status {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .status-planned {
+            background: #6c757d;
+            color: #fff;
+        }
+
+        .status-received {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .status-lifted {
+            background: #3d7bff;
+            color: #fff;
+        }
+
+        .card-timeline {
+            display: flex;
+            gap: 16px;
+            justify-content: space-between;
+        }
+
+        .timeline-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 13px;
+            flex: 1;
+        }
+
+        .timeline-label {
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .timeline-time {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .card-details {
+            display: none;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #2f3340;
+        }
+
+        .card-details.show {
+            display: block;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-label {
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .detail-value {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-row">
+        <div class="header-title">進度表</div>
+        <a href="index.html" class="back-btn">返回主畫面</a>
+    </div>
+
+    <div class="search-section">
+        <input type="text" id="searchBox" class="search-box" placeholder="搜尋構件編號、位置或規格...">
+    </div>
+
+    <div class="progress-section">
+        <div class="stats-card">
+            <div class="progress-title">已進料進度</div>
+            <div class="progress-circle">
+                <svg class="progress-svg" width="150" height="150">
+                    <circle class="progress-bg" cx="75" cy="75" r="65"></circle>
+                    <circle id="receivedCircle" class="progress-bar received" cx="75" cy="75" r="65"></circle>
+                </svg>
+                <div class="progress-text" id="receivedPercent">0%</div>
+            </div>
+            <div class="progress-label">已簽收構件</div>
+            <div class="progress-stats">
+                <div class="stat-item">
+                    <div class="stat-label">構件數</div>
+                    <div class="stat-value" id="receivedCount">0 / 0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">重量</div>
+                    <div class="stat-value" id="receivedWeight">0 / 0 kg</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <div class="progress-title">已吊裝進度</div>
+            <div class="progress-circle">
+                <svg class="progress-svg" width="150" height="150">
+                    <circle class="progress-bg" cx="75" cy="75" r="65"></circle>
+                    <circle id="liftedCircle" class="progress-bar lifted" cx="75" cy="75" r="65"></circle>
+                </svg>
+                <div class="progress-text" id="liftedPercent">0%</div>
+            </div>
+            <div class="progress-label">已完成吊裝</div>
+            <div class="progress-stats">
+                <div class="stat-item">
+                    <div class="stat-label">構件數</div>
+                    <div class="stat-value" id="liftedCount">0 / 0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">重量</div>
+                    <div class="stat-value" id="liftedWeight">0 / 0 kg</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cards-container" id="cardsContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="back.js"></script>
+    <script>
+        const db = window.supabaseClient;
+        let allComponents = [];
+        let filteredComponents = [];
+        let plannedItems = [];
+        let confirmedItems = [];
+        let finishedItems = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+
+            document.getElementById('searchBox').addEventListener('input', (e) => {
+                const keyword = e.target.value.toLowerCase().trim();
+                if (keyword === '') {
+                    filteredComponents = allComponents;
+                } else {
+                    filteredComponents = allComponents.filter(component =>
+                        (component.item_id || '').toLowerCase().includes(keyword) ||
+                        (component.position || '').toLowerCase().includes(keyword) ||
+                        (component.spec || '').toLowerCase().includes(keyword)
+                    );
+                }
+                renderCards();
+            });
+        });
+
+        async function loadAllData() {
+            if (!db) return;
+
+            const [componentsRes, plannedRes, confirmedRes, finishedRes] = await Promise.all([
+                db.from('components').select('*'),
+                db.from('planned').select('*'),
+                db.from('confirm').select('*'),
+                db.from('finished').select('*')
+            ]);
+
+            allComponents = componentsRes.data || [];
+            filteredComponents = allComponents;
+            plannedItems = plannedRes.data || [];
+            confirmedItems = confirmedRes.data || [];
+            finishedItems = finishedRes.data || [];
+
+            updateProgress();
+            renderCards();
+        }
+
+        function updateProgress() {
+            const totalComponents = allComponents.length;
+            const receivedCount = confirmedItems.length;
+            const liftedCount = finishedItems.length;
+
+            const totalWeight = allComponents.reduce((sum, c) => sum + (parseFloat(c.weight) || 0) * (parseInt(c.qty) || 1), 0);
+            const receivedWeight = confirmedItems.reduce((sum, item) => {
+                const component = allComponents.find(c => c.item_id === item.item_id && c.position === item.position);
+                return sum + (component ? (parseFloat(component.weight) || 0) * (parseInt(item.qty) || 1) : 0);
+            }, 0);
+            const liftedWeight = finishedItems.reduce((sum, item) => {
+                const component = allComponents.find(c => c.item_id === item.item_id && c.position === item.position);
+                return sum + (component ? (parseFloat(component.weight) || 0) * (parseInt(item.qty) || 1) : 0);
+            }, 0);
+
+            const receivedPercent = totalComponents > 0 ? Math.round((receivedCount / totalComponents) * 100) : 0;
+            const liftedPercent = totalComponents > 0 ? Math.round((liftedCount / totalComponents) * 100) : 0;
+
+            const circumference = 2 * Math.PI * 65;
+            const receivedOffset = circumference - (receivedPercent / 100) * circumference;
+            const liftedOffset = circumference - (liftedPercent / 100) * circumference;
+
+            document.getElementById('receivedCircle').style.strokeDasharray = circumference;
+            document.getElementById('receivedCircle').style.strokeDashoffset = receivedOffset;
+            document.getElementById('liftedCircle').style.strokeDasharray = circumference;
+            document.getElementById('liftedCircle').style.strokeDashoffset = liftedOffset;
+
+            document.getElementById('receivedPercent').textContent = receivedPercent + '%';
+            document.getElementById('liftedPercent').textContent = liftedPercent + '%';
+            document.getElementById('receivedCount').textContent = receivedCount + ' / ' + totalComponents;
+            document.getElementById('liftedCount').textContent = liftedCount + ' / ' + totalComponents;
+            document.getElementById('receivedWeight').textContent = Math.round(receivedWeight) + ' / ' + Math.round(totalWeight) + ' kg';
+            document.getElementById('liftedWeight').textContent = Math.round(liftedWeight) + ' / ' + Math.round(totalWeight) + ' kg';
+        }
+
+        function toggleDetails(cardId) {
+            const details = document.getElementById(`details-${cardId}`);
+            details.classList.toggle('show');
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+
+            if (allComponents.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#777; padding:40px;">尚無構件資料</div>';
+                return;
+            }
+
+            if (filteredComponents.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#777; padding:40px;">找不到符合的構件</div>';
+                return;
+            }
+
+            filteredComponents.forEach((component, index) => {
+                const planned = plannedItems.find(p => p.item_id === component.item_id && p.position === component.position);
+                const confirmed = confirmedItems.find(c => c.item_id === component.item_id && c.position === component.position);
+                const finished = finishedItems.find(f => f.item_id === component.item_id && f.position === component.position);
+
+                let status = 'planned';
+                let statusText = '未登記';
+                if (finished) {
+                    status = 'lifted';
+                    statusText = '已吊裝';
+                } else if (confirmed) {
+                    status = 'received';
+                    statusText = '已簽收';
+                } else if (planned) {
+                    status = 'planned';
+                    statusText = '已登記';
+                }
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => toggleDetails(index);
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-id">${component.item_id} - ${component.position}</div>
+                        <div class="card-status status-${status}">${statusText}</div>
+                    </div>
+                    <div class="card-timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-label">預計進料</div>
+                            <div class="timeline-time">${planned ? formatDate(planned.created_at) : '-'}</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-label">已進料</div>
+                            <div class="timeline-time">${confirmed ? formatDate(confirmed.created_at) : '-'}</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-label">已吊裝</div>
+                            <div class="timeline-time">${finished ? formatDate(finished.created_at) : '-'}</div>
+                        </div>
+                    </div>
+                    <div class="card-details" id="details-${index}">
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">規格</div>
+                                <div class="detail-value">${component.spec || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">材質</div>
+                                <div class="detail-value">${component.material || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">重量 (kg)</div>
+                                <div class="detail-value">${component.weight || '-'}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">數量</div>
+                                <div class="detail-value">${component.qty || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${month}/${day} ${hours}:${minutes}`;
+        }
     </script>
-  </body>
+    <script src="backToTop.js"></script>
+</body>
+
 </html>
-      function renderBars(){
-        const barsEl=document.getElementById('progressBars'); if(!barsEl) return;
-        const comps=libs();
-        const num=(v)=>{ const n=Number(String(v??'').replace(/,/g,'')); return Number.isFinite(n)?n:0; };
-        const totalQty=comps.reduce((s,c)=> s + num(c?.quantity), 0);
-        const key=(x)=>`${String(x.id)}|${String(x.position||'')}`;
-        const recKeys=new Set(today().filter(r=>r.status==='received').map(key));
-        const recQty=comps.reduce((s,i)=> s + (recKeys.has(key(i))? num(i?.quantity):0), 0);
-        const usedQtyRaw=(used()||[]).reduce((s,u)=> s + num(u?.qty??u?.quantity??u?.usedQty), 0);
-        const usedQty=Math.min(usedQtyRaw,totalQty);
-        const mkBar=(label, cls, numv, denom)=>{
-          const row=document.createElement('div'); row.className='bar-row';
-          const pct = denom>0 ? Math.min(100, Math.max(0, numv/denom*100)) : 0;
-          row.innerHTML=`<div class="muted" style="min-width:96px">${label}</div><div class="bar"><div class="fill ${cls}" style="width:${pct.toFixed(2)}%"></div></div><div class="muted" style="min-width:160px;text-align:right">${numv} / ${denom}</div>`;
-          return row;
-        };
-        barsEl.innerHTML='';
-        barsEl.appendChild(mkBar('已進料進度','received',recQty,totalQty));
-        barsEl.appendChild(mkBar('已使用進度','used',usedQty,totalQty));
-      }

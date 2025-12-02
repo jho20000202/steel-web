@@ -1,24 +1,443 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>鋼構進出料記錄系統</title>
-    <link rel="stylesheet" href="styles.css?v=V6.1" />
-  </head>
-  <body>
-    <div id="app"></div>
-    <!-- 純 Web 版不依賴 GIS/原生 OAuth；如需 Drive，後續可改為後端 API -->
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* 主頁面樣式 - 與其他頁面統一 */
+        body {
+            background: #0f1320;
+            min-height: 100vh;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 功能按鈕網格 */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 16px;
+        }
+
+        .menu-btn {
+            background: #1c2433;
+            padding: 24px 16px;
+            border-radius: 18px;
+            font-size: 17px;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .menu-btn:hover {
+            background: #242d3f;
+            transform: translateY(-2px);
+        }
+
+        .menu-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 進度卡片 */
+        .progress-section {
+            margin: 16px;
+        }
+
+        .progress-container {
+            display: flex;
+            gap: 16px;
+        }
+
+        .progress-card {
+            flex: 1;
+            background: #1c2433;
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card-title {
+            color: #aaa;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin-bottom: 20px;
+        }
+
+        /* SVG 圓形進度條 */
+        .circle-svg {
+            width: 140px;
+            height: 140px;
+            transform: rotate(-90deg);
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: #2a303c;
+            stroke-width: 12;
+        }
+
+        .circle-progress-bar {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .circle-progress-bar.received {
+            stroke: #3d7bff;
+        }
+
+        .circle-progress-bar.lifted {
+            stroke: #28a745;
+        }
+
+        .card-footer {
+            width: 100%;
+            text-align: center;
+        }
+
+        .footer-title {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .footer-stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            border-top: 1px solid #2f3340;
+            padding-top: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-label {
+            color: #777;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* 備忘欄 */
+        .memo-section {
+            background: #141821;
+            margin: 16px;
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .memo-input {
+            width: 100%;
+            height: 100px;
+            background: #1c2433;
+            border: 1px solid #2f3340;
+            border-radius: 12px;
+            padding: 12px;
+            color: #fff;
+            font-size: 15px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .memo-input:focus {
+            outline: none;
+            border-color: #3d7bff;
+        }
+
+        /* 備份區域 */
+        .backup-section {
+            background: #141821;
+            margin: 16px;
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .row-btns {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .ghost-btn {
+            flex: 1;
+            padding: 14px 18px;
+            background: #1e2737;
+            color: #fff;
+            border-radius: 14px;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .ghost-btn:hover {
+            background: #2a3447;
+        }
+
+        .danger-btn {
+            background: #ff4b4b;
+            color: #fff;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .danger-btn:hover {
+            background: #ff3333;
+        }
+
+        .danger-btn.full {
+            width: 100%;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            /* 保持 2欄排列 & 左右排列，不強制變為單欄 */
+            /* .menu-grid { grid-template-columns: 1fr; } */
+            /* .progress-container { flex-direction: column; } */
+
+            .row-btns {
+                flex-direction: column;
+            }
+
+            /* 調整圓環大小以適應手機 */
+            .circle-svg {
+                width: 120px;
+                height: 120px;
+            }
+
+            .progress-container {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 頂部標題 -->
+    <header class="top-bar">
+        <div class="top-bar-title">鋼構進出料記錄系統 V-4.0.8</div>
+    </header>
+
+    <main>
+
+        <!-- 六大功能按鈕 -->
+        <section class="menu-grid">
+            <button class="menu-btn" onclick="location.href='planned.html'">預計進料登記</button>
+            <button class="menu-btn" onclick="location.href='confirm.html'">每日吊裝記錄</button>
+            <button class="menu-btn" onclick="location.href='manage.html'">構件管理</button>
+            <button class="menu-btn" onclick="location.href='library.html'">構件庫</button>
+            <button class="menu-btn" onclick="location.href='progress.html'">進度表</button>
+            <button class="menu-btn" onclick="location.href='report.html'">報表匯出</button>
+        </section>
+
+
+        <!-- 圓環進度總覽 -->
+        <section class="progress-section">
+            <div class="progress-container">
+                <!-- 已進料進度 -->
+                <div class="progress-card">
+                    <div class="card-title">已進料進度</div>
+                    <div class="chart-container">
+                        <svg class="circle-svg" viewBox="0 0 160 160">
+                            <circle class="circle-bg" cx="80" cy="80" r="70"></circle>
+                            <circle id="circleReceived" class="circle-progress-bar received" cx="80" cy="80" r="70"
+                                stroke-dasharray="439.82" stroke-dashoffset="439.82"></circle>
+                            <text x="80" y="80" text-anchor="middle" dy="0.3em" font-size="32" font-weight="700"
+                                fill="#fff" id="receivedPct" transform="rotate(90 80 80)">0%</text>
+                        </svg>
+                    </div>
+                    <div class="card-footer">
+                        <div class="footer-title">已簽收構件</div>
+                        <div class="footer-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">構件數</div>
+                                <div class="stat-value" id="receivedCount">0 / 0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">重量</div>
+                                <div class="stat-value" id="receivedWeight">0 / 0 kg</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已吊裝進度 -->
+                <div class="progress-card">
+                    <div class="card-title">已吊裝進度</div>
+                    <div class="chart-container">
+                        <svg class="circle-svg" viewBox="0 0 160 160">
+                            <circle class="circle-bg" cx="80" cy="80" r="70"></circle>
+                            <circle id="circleLifted" class="circle-progress-bar lifted" cx="80" cy="80" r="70"
+                                stroke-dasharray="439.82" stroke-dashoffset="439.82"></circle>
+                            <text x="80" y="80" text-anchor="middle" dy="0.3em" font-size="32" font-weight="700"
+                                fill="#fff" id="liftedPct" transform="rotate(90 80 80)">0%</text>
+                        </svg>
+                    </div>
+                    <div class="card-footer">
+                        <div class="footer-title">已完成吊裝</div>
+                        <div class="footer-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">構件數</div>
+                                <div class="stat-value" id="liftedCount">0 / 0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">重量</div>
+                                <div class="stat-value" id="liftedWeight">0 / 0 kg</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 備忘欄 -->
+        <section class="memo-section">
+            <div class="section-title">備忘欄</div>
+            <textarea id="memoInput" class="memo-input" placeholder="在此輸入備忘事項..."></textarea>
+        </section>
+
+        <!-- 資料備份與還原 -->
+        <section class="backup-section">
+            <div class="section-title">資料備份與還原</div>
+
+            <div class="row-btns">
+                <button class="ghost-btn" onclick="exportBackup()">備份匯出</button>
+                <button class="ghost-btn" onclick="importBackup()">備份匯入</button>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="back.js"></script>
     <script>
-      window.addEventListener('error', function(e){
-        var app=document.getElementById('app');
-        if(!app) return;
-        app.innerHTML = '<div class="section"><div class="card"><div class="app-title">載入失敗</div><div class="muted">發生非預期錯誤，請點按下方重新載入。</div><div style="margin-top:8px"><button class="btn" onclick="location.reload()">重新整理</button></div></div></div>';
-        try{ console.error('Runtime error', e.error || e.message || e); }catch{}
-      });
+        const db = window.supabaseClient;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadProgress();
+            loadMemo();
+
+            document.getElementById('memoInput').addEventListener('input', saveMemo);
+        });
+
+        async function loadProgress() {
+            if (!db) return;
+
+            try {
+                // Fetch all data
+                const { data: components, error: compError } = await db.from("components").select("item_id, weight");
+                if (compError) throw compError;
+
+                const { data: confirmed, error: confError } = await db.from("confirm").select("item_id");
+                if (confError) throw confError;
+
+                const { data: finished, error: finError } = await db.from("finished").select("item_id");
+                if (finError) throw finError;
+
+                // Create a map of item_id to weight
+                const weightMap = new Map();
+                components.forEach(comp => {
+                    weightMap.set(comp.item_id, Number(comp.weight) || 0);
+                });
+
+                // Calculate totals
+                const totalCount = components.length;
+                const totalWeight = components.reduce((sum, item) => sum + (Number(item.weight) || 0), 0);
+
+                // Calculate received (confirmed items)
+                const receivedCount = confirmed.length;
+                const receivedWeight = confirmed.reduce((sum, item) => {
+                    return sum + (weightMap.get(item.item_id) || 0);
+                }, 0);
+
+                // Calculate lifted (finished items)
+                const liftedCount = finished.length;
+                const liftedWeight = finished.reduce((sum, item) => {
+                    return sum + (weightMap.get(item.item_id) || 0);
+                }, 0);
+
+                // Update UI
+                updateCard('received', receivedCount, totalCount, receivedWeight, totalWeight);
+                updateCard('lifted', liftedCount, totalCount, liftedWeight, totalWeight);
+
+            } catch (err) {
+                console.error("Error loading progress:", err);
+            }
+        }
+
+        function updateCard(type, count, totalCount, weight, totalWeight) {
+            const pct = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+            const circle = document.getElementById(`circle${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            const pctText = document.getElementById(`${type}Pct`);
+            const countText = document.getElementById(`${type}Count`);
+            const weightText = document.getElementById(`${type}Weight`);
+
+            // Update Circle
+            const circumference = 2 * Math.PI * 70; // r=70
+            const offset = circumference - (pct / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            // Update Text
+            pctText.textContent = `${pct}%`;
+            countText.textContent = `${count} / ${totalCount}`;
+            weightText.textContent = `${weight.toLocaleString()} / ${totalWeight.toLocaleString()} kg`;
+        }
+
+        function loadMemo() {
+            const memo = localStorage.getItem('dashboard_memo');
+            if (memo) {
+                document.getElementById('memoInput').value = memo;
+            }
+        }
+
+        function saveMemo(e) {
+            localStorage.setItem('dashboard_memo', e.target.value);
+        }
     </script>
-    <script src="back.js?v=V6.1"></script>
-    <script type="module" src="app.js?v=V6.1"></script>
-    <pre id="debugArea" style="background:#111;color:#0f0;padding:10px;white-space:pre-wrap;font-size:12px;border:1px solid #333;"></pre>
-  </body>
+
+    <script src="backToTop.js"></script>
+</body>
+
 </html>

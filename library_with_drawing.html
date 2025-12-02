@@ -184,32 +184,6 @@
             background: #e03e3e;
         }
 
-        .view-drawing-btn {
-            background: #17a2b8;
-            color: #fff;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            pointer-events: auto;
-            position: relative;
-            z-index: 10;
-            margin-right: 8px;
-        }
-
-        .view-drawing-btn:hover {
-            background: #138496;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-            margin-top: 12px;
-        }
-
-
         .detail-row {
             display: flex;
             justify-content: space-between;
@@ -419,8 +393,7 @@
                         <div class="detail-row"><span class="detail-label">規格</span><span>${item.spec || '-'}</span></div>
                         <div class="detail-row"><span class="detail-label">材質</span><span>${item.material || '-'}</span></div>
                         <div class="detail-row"><span class="detail-label">重量</span><span>${item.weight || 0} kg</span></div>
-                        <div class="btn-group">
-                            <button class="view-drawing-btn" onclick="event.stopPropagation(); viewDrawing('${item.item_id}')">📋 查看圖面</button>
+                        <div style="margin-top: 12px; text-align: right;">
                             <button class="delete-btn" onclick="event.stopPropagation(); window.handleDelete('${item.id}')">刪除構件</button>
                         </div>
                     </div>
@@ -559,10 +532,205 @@
                 } catch (err) {
                     console.error('Excel 解析失敗：' + err.message);
                     input.value = '';
+                    db.from('finished').delete().eq('item_id', itemId)
+                ];
+
+                    const results = await Promise.all(deletePromises);
+
+                    // Check for errors
+                    const errors = results.filter(r => r.error);
+                    if (errors.length > 0) {
+                        console.error('Delete errors:', errors);
+                        alert('部分資料刪除失敗，請檢查控制台查看詳情');
+                    } else {
+                        console.log('All records deleted successfully from all tables');
+                        // Reload items
+                        loadItems();
+                    }
+                } catch (err) {
+                    console.error('Delete exception:', err);
+                    alert('刪除時發生錯誤：' + err.message);
                 }
-            };
-            reader.readAsArrayBuffer(file);
-        }
+            }
+
+            async function loadItems() {
+                if (!db) return;
+                const { data, error } = await db.from('components').select('*').order('created_at', { ascending: false });
+                if (error) { console.error('Error loading items:', error); return; }
+                allItems = data || [];
+                filteredItems = allItems;
+                displayedCount = 0;
+                renderCards(true);
+            }
+
+            function renderCards(reset = false) {
+                const container = document.getElementById('cardList');
+                if (reset) { container.innerHTML = ''; displayedCount = 0; }
+                if (filteredItems.length === 0) { container.innerHTML = '<div style="text-align:center; color:#777; padding:30px;">尚無資料</div>'; return; }
+
+                const itemsToShow = filteredItems.slice(displayedCount, displayedCount + ITEMS_PER_PAGE);
+                itemsToShow.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'component-card';
+
+                    // Check for ID
+                    if (!item.id) console.warn('Item missing ID:', item);
+
+                    card.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-id">${item.item_id}</div>
+                        <div class="card-pos">${item.position || '未指定位置'}</div>
+                    </div>
+                    <div class="card-actions">
+                        <span style="color: #aaa; font-size: 14px;">數量: ${item.qty || 0}</span>
+                    </div>
+                    <div class="card-details">
+                        <div class="detail-row"><span class="detail-label">規格</span><span>${item.spec || '-'}</span></div>
+                        <div class="detail-row"><span class="detail-label">材質</span><span>${item.material || '-'}</span></div>
+                        <div class="detail-row"><span class="detail-label">重量</span><span>${item.weight || 0} kg</span></div>
+                        <div style="margin-top: 12px; text-align: right;">
+                            <button class="delete-btn" onclick="event.stopPropagation(); window.handleDelete('${item.id}')">刪除構件</button>
+                        </div>
+                    </div>
+                `;
+
+                    // Add click handler to card for toggling details
+                    card.addEventListener('click', (e) => {
+                        // If clicking the delete button or its children, do not toggle
+                        if (e.target.closest('.delete-btn')) return;
+
+                        const details = card.querySelector('.card-details');
+                        details.classList.toggle('show');
+                    });
+
+                    container.appendChild(card);
+                });
+                displayedCount += itemsToShow.length;
+
+                const oldLoading = document.getElementById('loadingMsg');
+                if (oldLoading) oldLoading.remove();
+                if (displayedCount < filteredItems.length) {
+                    const loadingMsg = document.createElement('div');
+                    loadingMsg.id = 'loadingMsg';
+                    loadingMsg.style.textAlign = 'center';
+                    loadingMsg.style.color = '#aaa';
+                    loadingMsg.style.padding = '20px';
+                    loadingMsg.innerText = `滾動載入更多... (${displayedCount}/${filteredItems.length})`;
+                    container.appendChild(loadingMsg);
+                }
+            }
+
+            document.getElementById('cardList').addEventListener('scroll', () => {
+                if (displayedCount >= filteredItems.length) return;
+                const container = document.getElementById('cardList');
+                if (container.scrollTop + container.clientHeight >= container.scrollHeight - 50) renderCards(false);
+            });
+
+            async function addItem() {
+                const id = document.getElementById('newId').value.trim();
+                if (!id) { alert('請輸入構件編號'); return; }
+                const newItem = {
+                    item_id: id,
+                    spec: document.getElementById('newSpec').value.trim(),
+                    material: document.getElementById('newMaterial').value.trim(),
+                    weight: Number(document.getElementById('newWeight').value.trim()) || 0,
+                    position: document.getElementById('newPos').value.trim(),
+                    qty: Number(document.getElementById('newQty').value.trim()) || 0
+                };
+                const { error } = await db.from('components').insert([newItem]);
+                if (error) { alert('新增失敗：' + error.message); }
+                else {
+                    document.getElementById('newId').value = '';
+                    document.getElementById('newSpec').value = '';
+                    document.getElementById('newMaterial').value = '';
+                    document.getElementById('newWeight').value = '';
+                    document.getElementById('newPos').value = '';
+                    document.getElementById('newQty').value = '1';
+                    closeModal();
+                    loadItems();
+                }
+            }
+
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const keyword = e.target.value.toLowerCase();
+                filteredItems = allItems.filter(item =>
+                    (item.item_id || '').toLowerCase().includes(keyword) ||
+                    (item.spec || '').toLowerCase().includes(keyword) ||
+                    (item.position || '').toLowerCase().includes(keyword)
+                );
+                displayedCount = 0;
+                renderCards(true);
+            });
+
+            function downloadTemplate() {
+                const wb = XLSX.utils.book_new();
+                const ws_data = [
+                    ["構件編號", "規格", "材質", "重量", "位置", "數量"],
+                    ["C1-101", "H-300x150", "SN490B", 150.5, "1F-A區", 1],
+                    ["B1-201", "H-200x100", "SS400", 85.2, "1F-B區", 2]
+                ];
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                XLSX.utils.book_append_sheet(wb, ws, "構件匯入範例");
+                XLSX.writeFile(wb, "構件匯入範例.xlsx");
+            }
+
+            async function handleExcelUpload(input) {
+                const file = input.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                        if (jsonData.length === 0) { alert('Excel 檔案內容為空'); input.value = ''; return; }
+
+                        const mappedData = jsonData.map(row => {
+                            const id = row['構件編號'] || row['編號'] || row['Item ID'] || row['item_id'];
+                            if (!id) return null;
+                            return {
+                                item_id: String(id).trim(),
+                                spec: (row['構件規格'] || row['規格'] || row['Spec'] || row['spec'] || '').toString().trim(),
+                                material: (row['構件材質'] || row['材質'] || row['Material'] || row['material'] || '').toString().trim(),
+                                weight: Number(row['構件重量'] || row['重量'] || row['Weight'] || row['weight']) || 0,
+                                position: (row['構件位置'] || row['位置'] || row['Position'] || row['position'] || '').toString().trim(),
+                                qty: Number(row['構件數量'] || row['數量'] || row['Qty'] || row['qty']) || 0
+                            };
+                        }).filter(item => item !== null);
+
+                        if (mappedData.length === 0) {
+                            alert(`無法識別有效的構件資料。\n\n偵測到的欄位：${Object.keys(jsonData[0]).join(', ')}\n\n請使用「下載範例格式」來確認正確的欄位名稱。`);
+                            input.value = '';
+                            return;
+                        }
+
+                        let successCount = 0, failCount = 0, lastError = "";
+                        for (let i = 0; i < mappedData.length; i += 100) {
+                            const batch = mappedData.slice(i, i + 100);
+                            const { error } = await db.from('components').insert(batch);
+                            if (error) {
+                                console.error('Batch insert error:', error);
+                                lastError = error.message;
+                                failCount += batch.length;
+                            } else {
+                                successCount += batch.length;
+                            }
+                        }
+
+                        let msg = `匯入完成！\n成功：${successCount} 筆\n失敗：${failCount} 筆`;
+                        if (failCount > 0 && lastError) msg += `\n\n錯誤訊息：${lastError}`;
+                        alert(msg);
+                        input.value = '';
+                        loadItems();
+                    } catch (err) {
+                        console.error('Excel 解析失敗：' + err.message);
+                        input.value = '';
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
     </script>
     <script src="drawingPreview.js"></script>
 

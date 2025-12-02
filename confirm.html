@@ -1,208 +1,379 @@
-<!doctype html>
-<html lang="zh-Hant">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <title>進料確認</title>
-    <link rel="stylesheet" href="styles.css?v=V6.1" />
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日吊裝記錄</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
-      #confirmList .list-item { grid-template-columns: 1.2fr .9fr auto; align-items:center; gap:8px; }
-      #confirmList .list-item > div { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-      #confirmList .details { display:none; padding-top:6px; }
-      #confirmList .details.open { display:block; }
-      #confirmList .ops { display:flex; justify-content:flex-end; }
-      #confirmList .ops .btn { padding:8px 10px; font-size:14px; }
-      @media (max-width: 480px) {
-        #confirmList .list-item { grid-template-columns: 1fr .8fr auto !important; }
-        #confirmList .ops { justify-content:flex-start; }
-      }
-      .fab-top { position: fixed; bottom: 40px; right: 16px; display: none; border-radius: 999px; }
+        body {
+            padding: 20px;
+            background: #0f1320;
+            color: #fff;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #2f3340;
+            color: #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #3e4452;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input-box {
+            padding: 10px 16px;
+            border-radius: 10px;
+            background: #2a2b31;
+            border: 1px solid #3e414b;
+            color: #fff;
+            font-size: 15px;
+            max-width: 300px;
+        }
+
+        .input-box:focus {
+            outline: none;
+            border-color: #3d7bff;
+        }
+
+        .select-all-btn,
+        .confirm-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .select-all-btn {
+            background: #6c757d;
+            color: #fff;
+        }
+
+        .select-all-btn:hover {
+            background: #5a6268;
+        }
+
+        .confirm-btn {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .confirm-btn:hover {
+            background: #218838;
+        }
+
+        .confirm-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card {
+            background: #1c2433;
+            border-radius: 12px;
+            padding: 16px 20px;
+            border: 1px solid #2f3340;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .card.selected {
+            border-color: #28a745;
+            background: #1e2d1e;
+        }
+
+        .card.unselected {
+            border-color: #dc3545;
+            background: #2d1e1e;
+        }
+
+        .card.hidden {
+            display: none;
+        }
+
+        .card-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .card-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #3d7bff;
+            min-width: 100px;
+        }
+
+        .card-detail {
+            font-size: 15px;
+            color: #fff;
+        }
+
+        .card-meta {
+            color: #aaa;
+            font-size: 14px;
+            margin-right: 6px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            font-size: 15px;
+            color: #fff;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .checkbox-wrapper {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
     </style>
-  </head>
-  <body>
-    <div class="section">
-      <div class="card">
-        <div class="row" style="flex-wrap:wrap;">
-          <div class="app-title">進料確認</div>
-          <a class="btn" href="index.html">返回主畫面</a>
-          <select id="sortConfirm" class="btn" style="min-width:160px">
-            <option value="id_asc">排列：編號↑</option>
-            <option value="id_desc">排列：編號↓</option>
-            <option value="used_last" selected>排列：已使用最後</option>
-          </select>
-        </div>
+</head>
 
-        <div class="tools" style="margin-top:8px; gap:8px; flex-wrap:wrap;">
-          <input id="cq" class="btn" placeholder="搜尋：編號/位置/規格/材質/重量/數量" style="flex:1 1 100%; min-width:240px;" />
-        </div>
-        <div id="confirmList" class="list" style="margin-top:8px;"></div>
-        <div class="row" style="margin-top:16px; gap:8px; align-items:center; flex-wrap:wrap;">
-          <button id="exportToday" class="btn primary">輸出今日進料 Excel</button>
-        </div>
-      </div>
+<body>
+    <div class="header-row">
+        <div class="header-title">每日吊裝記錄</div>
+        <a href="index.html" class="back-btn">返回主畫面</a>
     </div>
-    <button class="btn fab-top" id="toTopConfirm">↑</button>
 
-    <script src="back.js?v=V6.1"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <div class="action-bar">
+        <input type="text" id="searchBox" class="input-box" placeholder="搜尋構件編號或位置..." oninput="filterItems()">
+        <button class="select-all-btn" onclick="toggleSelectAll()">全選 / 全不選</button>
+        <button class="confirm-btn" id="confirmBtn" onclick="confirmLifted()">確認吊裝</button>
+        <span id="selectedCount" style="color: #aaa; font-size: 14px;">已選擇: 0 項</span>
+    </div>
+
+    <div class="cards-container" id="cardsContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="back.js"></script>
     <script>
-      function get(k,f){ try { return JSON.parse(localStorage.getItem(k)) ?? f } catch { return f } }
-      function set(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
-      const today=()=>get('todayRecords', []);
-      const libs=()=>get('componentsLibrary', []);
-      const fmt2=(v)=>{
-        const n=Number(String(v||'').replace(/,/g,''));
-        return Number.isFinite(n)? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(v||'');
-      };
+        const db = window.supabaseClient;
+        let confirmItems = [];
+        let selectedItems = new Set();
 
-      const round2 = (n) => Math.round(Number(n || 0) * 100) / 100;
-      const sumUsedByKey=(id, position)=> (get('usedRecords', []) || []).reduce((s,u)=> {
-        const match = String(u?.id)===String(id) && String(u?.position||'')===String(position||'');
-        return s + (match ? Number(u?.qty ?? u?.quantity ?? u?.usedQty ?? 0) : 0);
-      }, 0);
-
-      function currentStatusMap(){
-        const map=new Map();
-        today().forEach(r=>{
-          const key = `${String(r.id)}|${String(r.position||'')}`;
-          map.set(key, { status:r.status, plannedAt:r.plannedAt||'', actualAt:r.actualAt||'', position: r.position||'' });
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfirmItems();
         });
-        return map;
-      }
 
-      function render(){
-        const list=document.getElementById('confirmList'); list.innerHTML='';
-        const stat=currentStatusMap();
-        const all=libs().slice();
-        const sortSel = (document.getElementById('sortConfirm')?.value || 'id_asc');
-        const qVal=(document.getElementById('cq')?.value||'').trim().toUpperCase();
-        const rows=all.filter(i=>{
-          const key = `${String(i.id)}|${String(i.position||'')}`;
-          const s=stat.get(key); return s && s.status==='received';
-        }).filter(i=>{
-          if(!qVal) return true;
-          const fields=[i.id,i.position,i.spec,i.material,i.weight,i.quantity].map(v=>String(v||'').toUpperCase());
-          return fields.some(f=> f.includes(qVal));
-        });
-        // 排序：已使用最後 或 編號順序
-        const cmpIdAsc = (a,b)=> String(a.id).localeCompare(String(b.id));
-        const cmpIdDesc = (a,b)=> String(b.id).localeCompare(String(a.id));
-        const cmpUsedLast = (a,b)=>{
-          const ua = sumUsedByKey(a.id, a.position||'');
-          const ub = sumUsedByKey(b.id, b.position||'');
-          const aUsed = Number(ua) > 0 ? 1 : 0;
-          const bUsed = Number(ub) > 0 ? 1 : 0;
-          if (aUsed !== bUsed) return aUsed - bUsed; // 未使用(0)先、已使用(1)後
-          return String(a.id).localeCompare(String(b.id));
-        };
-        if (sortSel === 'id_desc') rows.sort(cmpIdDesc);
-        else if (sortSel === 'used_last') rows.sort(cmpUsedLast);
-        else rows.sort(cmpIdAsc);
-        if(rows.length===0){ list.innerHTML='<div class="muted">今日無進料紀錄</div>'; return; }
-        rows.forEach(item=>{
-          const key = `${String(item.id)}|${String(item.position||'')}`;
-          const s=stat.get(key);
-          const row=document.createElement('div'); row.className='list-item row-toggle';
-          const total = Number(item.quantity || 0);
-          const usedQty = sumUsedByKey(item.id, item.position);
-          row.innerHTML=`
-            <div>${item.id}</div>
-            <div class="muted">${item.position||'-'}</div>
-            <div class="ops"></div>
-          `;
-          const details=document.createElement('div'); details.className='details';
-          details.innerHTML=`
-            <div class="muted">重量：${fmt2(item.weight)||'-'}</div>
-            <div class="muted">預計日期：${s.plannedAt||'-'}</div>
-            <div class="muted">實際時間：${s.actualAt||'-'}</div>
-          `;
-          const opsEl = row.querySelector('.ops');
-          const remain = round2(total - usedQty);
-          if (remain <= 0) {
-            opsEl.innerHTML = '<button class="btn" disabled>已全數使用</button>';
-          } else {
-            opsEl.innerHTML = '<button class="btn primary mobileUseBtn" title="標記全數使用">確認使用</button>';
-            const btn = opsEl.querySelector('.mobileUseBtn');
-            btn.addEventListener('click', () => {
-              const now = new Date();
-              const recs = get('usedRecords', []);
-              recs.push({ id: item.id, position: item.position||'', qty: remain, usedAtDate: now.toISOString().slice(0,10), usedAt: now.toLocaleString() });
-              set('usedRecords', recs);
-              // 更新按鈕狀態
-              const afterUsed = round2(total - sumUsedByKey(item.id, item.position));
-              if (afterUsed <= 0) {
-                opsEl.innerHTML = '<button class="btn" disabled>已全數使用</button>';
-              }
+        async function loadConfirmItems() {
+            const { data, error } = await db.from('confirm')
+                .select('*')
+                .is('lifted_at', null)
+                .order('confirmed_date', { ascending: true });
+
+            if (error) {
+                console.error('Error loading confirm items:', error);
+                return;
+            }
+
+            confirmItems = data || [];
+            selectedItems = new Set(confirmItems.map(item => item.id));
+            renderCards();
+            updateSelectedCount();
+        }
+
+        function filterItems() {
+            const searchTerm = document.getElementById('searchBox').value.trim().toUpperCase();
+            const cards = document.querySelectorAll('.card');
+
+            confirmItems.forEach((item, index) => {
+                const card = cards[index];
+                if (!card) return;
+
+                const matchesSearch = !searchTerm ||
+                    item.item_id.toUpperCase().includes(searchTerm) ||
+                    item.position.toUpperCase().includes(searchTerm);
+
+                if (matchesSearch) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
             });
-          }
-          const wrap=document.createElement('div'); wrap.appendChild(row); wrap.appendChild(details);
-          row.addEventListener('click',()=>{ details.classList.toggle('open'); });
-          list.appendChild(wrap);
-        });
-        const cq=document.getElementById('cq'); if(cq){ cq.addEventListener('input', ()=>{ cq.value=cq.value.toUpperCase(); render(); }); }
-      }
-
-      async function exportExcel(){
-        const stat=currentStatusMap();
-        const all=libs().slice().sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-        const rows=all.filter(i=>{
-          const key = `${String(i.id)}|${String(i.position||'')}`;
-          const s=stat.get(key); return s && s.status==='received';
-        }).map(i=>{
-          const key = `${String(i.id)}|${String(i.position||'')}`;
-          const s=stat.get(key);
-          return {
-            '構件編號': i.id,
-            '構件位置': i.position||'',
-            '構件重量': i.weight||'',
-            '預計日期': s.plannedAt||'',
-            '實際時間': s.actualAt||''
-          };
-        });
-        const ws=XLSX.utils.json_to_sheet(rows);
-        const wb=XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, '今日進料');
-        const data = XLSX.write(wb, { bookType:'xlsx', type:'array' });
-        const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const saved = await (window.saveBlobWithPicker ? window.saveBlobWithPicker(blob, '今日進料.xlsx') : false);
-        if (!saved) alert('裝置不支援原生儲存');
-      }
-
-      (function addPreview(){
-        const row = document.querySelector('.row[style*="margin-top:16px"]');
-        if(row){
-          const btn = document.createElement('button'); btn.className='btn'; btn.textContent='預覽 Excel';
-          btn.addEventListener('click', async ()=>{
-            try {
-              const stat=currentStatusMap();
-              const all=libs().slice().sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-              const rows=all.filter(i=>{ const key = `${String(i.id)}|${String(i.position||'')}`; const s=stat.get(key); return s && s.status==='received'; }).map(i=>{ const key = `${String(i.id)}|${String(i.position||'')}`; const s=stat.get(key); return ['構件編號', i.id, '構件位置', i.position||'', '構件重量', i.weight||'', '預計日期', s.plannedAt||'', '實際時間', s.actualAt||'']; });
-              const ws=XLSX.utils.aoa_to_sheet([['今日進料'], ...rows]); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '今日進料'); const data = XLSX.write(wb, { bookType:'xlsx', type:'array' }); const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-              if (window.showExcelPreview) window.showExcelPreview(blob, '今日進料.xlsx');
-            } catch (e) { alert('預覽失敗：'+(e?.message||e)); }
-          });
-          row.insertBefore(btn, row.querySelector('#exportToday'));
         }
-      })();
 
-      document.getElementById('exportToday').addEventListener('click', exportExcel);
-      // 排序切換即時刷新
-      (function(){ const sel=document.getElementById('sortConfirm'); if(sel){ sel.addEventListener('change', render); } })();
-      // 新增清除今日進料資料按鈕
-      (function(){
-        const row = document.querySelector('.row[style*="margin-top:16px"]');
-        if(row){
-          const btn = document.createElement('button'); btn.id='clearToday'; btn.className='btn'; btn.textContent='清除今日進料';
-          row.appendChild(btn);
-          btn.addEventListener('click', ()=>{
-            if(!confirm('確定要清除今日進料資料？')) return;
-            localStorage.removeItem('todayRecords');
-            render();
-          });
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+
+            if (confirmItems.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#777; padding:40px;">尚無待吊裝的構件</div>';
+                return;
+            }
+
+            confirmItems.forEach(item => {
+                const isSelected = selectedItems.has(item.id);
+                const card = document.createElement('div');
+                card.className = `card ${isSelected ? 'selected' : 'unselected'}`;
+                card.setAttribute('data-id', item.id);
+                card.innerHTML = `
+                    <div class="card-info">
+                        <div class="card-id">${item.item_id}</div>
+                        <div class="card-detail"><span class="card-meta">位置:</span>${item.position}</div>
+                        <div class="card-detail"><span class="card-meta">預計日期:</span>${item.planned_date || 'N/A'}</div>
+                        <div class="card-detail"><span class="card-meta">簽收日期:</span>${item.confirmed_date || 'N/A'}</div>
+                        <div class="card-detail"><span class="card-meta">數量:</span>${item.qty}</div>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox" id="check-${item.id}" 
+                               ${isSelected ? 'checked' : ''} 
+                               onchange="toggleItem('${item.id}')">
+                        <label class="checkbox-label" for="check-${item.id}">
+                            ${isSelected ? '已吊裝' : '未吊裝'}
+                        </label>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
         }
-      })();
-      render();
-      (function(){ const b=document.getElementById('toTopConfirm'); if(!b) return; b.addEventListener('click',()=>{ window.scrollTo({ top:0, behavior:'smooth' }); }); const onScroll=()=>{ b.style.display = window.scrollY>200 ? 'inline-flex' : 'none'; }; window.addEventListener('scroll', onScroll); onScroll(); })();
+
+        function toggleItem(id) {
+            if (selectedItems.has(id)) {
+                selectedItems.delete(id);
+            } else {
+                selectedItems.add(id);
+            }
+            renderCards();
+            updateSelectedCount();
+            filterItems();
+        }
+
+        function toggleSelectAll() {
+            if (selectedItems.size === confirmItems.length) {
+                selectedItems.clear();
+            } else {
+                selectedItems = new Set(confirmItems.map(item => item.id));
+            }
+            renderCards();
+            updateSelectedCount();
+            filterItems();
+        }
+
+        function updateSelectedCount() {
+            const count = selectedItems.size;
+            document.getElementById('selectedCount').textContent = `已選擇: ${count} 項`;
+            document.getElementById('confirmBtn').disabled = count === 0;
+        }
+
+        async function confirmLifted() {
+            if (selectedItems.size === 0) {
+                alert('請至少選擇一項構件');
+                return;
+            }
+
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = '⏳ 處理中...';
+
+            const selectedItemsData = confirmItems.filter(item => selectedItems.has(item.id));
+            const currentTime = new Date().toISOString();
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const item of selectedItemsData) {
+                try {
+                    const { error: updateError } = await db.from('confirm')
+                        .update({ lifted_at: currentTime })
+                        .eq('id', item.id);
+
+                    if (updateError) {
+                        console.error('Update error:', updateError);
+                        failCount++;
+                        continue;
+                    }
+
+                    const { error: insertError } = await db.from('finished').insert([{
+                        item_id: item.item_id,
+                        position: item.position,
+                        planned_date: item.planned_date,
+                        confirmed_date: item.confirmed_date,
+                        lifted_date: new Date().toISOString().split('T')[0],
+                        qty: item.qty
+                    }]);
+
+                    if (insertError) {
+                        console.error('Insert error:', insertError);
+                        failCount++;
+                    } else {
+                        successCount++;
+                    }
+                } catch (err) {
+                    console.error('Error processing item:', err);
+                    failCount++;
+                }
+            }
+
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = '✓ 確認吊裝';
+
+            if (failCount > 0) {
+                alert(`處理完成！\n成功: ${successCount} 項\n失敗: ${failCount} 項`);
+            } else {
+                alert(`✅ 吊裝確認成功！\n\n已處理 ${successCount} 項構件`);
+            }
+
+            await loadConfirmItems();
+        }
     </script>
-  </body>
+    <script src="backToTop.js"></script>
+</body>
+
 </html>
