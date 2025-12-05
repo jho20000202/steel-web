@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 
 <head>
@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>報表匯出</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         body {
@@ -194,8 +195,12 @@
             </select>
         </div>
         <div class="input-group">
-            <label>日期選擇</label>
-            <input type="date" id="filterDate" class="input-box">
+            <label>開始日期</label>
+            <input type="date" id="startDate" class="input-box">
+        </div>
+        <div class="input-group">
+            <label>結束日期</label>
+            <input type="date" id="endDate" class="input-box">
         </div>
         <button class="btn btn-primary" onclick="generateReport()">查詢預覽</button>
         <div style="flex: 1;"></div>
@@ -225,12 +230,25 @@
         let currentData = [];
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('filterDate').valueAsDate = new Date();
+            const today = new Date();
+            document.getElementById('startDate').valueAsDate = today;
+            document.getElementById('endDate').valueAsDate = today;
         });
 
         async function generateReport() {
             const type = document.getElementById('reportType').value;
-            const date = document.getElementById('filterDate').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                alert('請選擇開始日期和結束日期');
+                return;
+            }
+
+            if (startDate > endDate) {
+                alert('開始日期不能晚於結束日期');
+                return;
+            }
 
             document.getElementById('loading').style.display = 'block';
             document.getElementById('tableBody').innerHTML = '';
@@ -250,10 +268,10 @@
                     data = await fetchAllComponentsData(weightMap);
                 } else if (type === 'received_today') {
                     headers = ['構件編號', '位置', '重量', '數量', '進料日期', '簽收時間'];
-                    data = await fetchReceivedData(date, weightMap);
+                    data = await fetchReceivedData(startDate, endDate, weightMap);
                 } else if (type === 'lifted_today') {
                     headers = ['構件編號', '位置', '重量', '數量', '吊裝日期', '完成時間'];
-                    data = await fetchLiftedData(date, weightMap);
+                    data = await fetchLiftedData(startDate, endDate, weightMap);
                 }
 
                 currentData = data;
@@ -308,10 +326,11 @@
             });
         }
 
-        async function fetchReceivedData(date, weightMap) {
+        async function fetchReceivedData(startDate, endDate, weightMap) {
             const { data, error } = await db.from('confirm')
                 .select('*')
-                .eq('confirmed_date', date);
+                .gte('confirmed_date', startDate)
+                .lte('confirmed_date', endDate);
 
             if (error) throw error;
 
@@ -325,10 +344,11 @@
             }));
         }
 
-        async function fetchLiftedData(date, weightMap) {
+        async function fetchLiftedData(startDate, endDate, weightMap) {
             const { data, error } = await db.from('finished')
                 .select('*')
-                .eq('lifted_date', date);
+                .gte('lifted_date', startDate)
+                .lte('lifted_date', endDate);
 
             if (error) throw error;
 
@@ -378,8 +398,9 @@
             if (!data) return;
 
             const type = document.getElementById('reportType').options[document.getElementById('reportType').selectedIndex].text;
-            const date = document.getElementById('filterDate').value;
-            const filename = `${type}_${date}.xlsx`;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const filename = `${type}_${startDate}_to_${endDate}.xlsx`;
 
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
@@ -392,8 +413,9 @@
             if (!data) return;
 
             const type = document.getElementById('reportType').options[document.getElementById('reportType').selectedIndex].text;
-            const date = document.getElementById('filterDate').value;
-            const filename = `${type}_${date}.csv`;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const filename = `${type}_${startDate}_to_${endDate}.csv`;
 
             const ws = XLSX.utils.json_to_sheet(data);
             const csv = XLSX.utils.sheet_to_csv(ws);

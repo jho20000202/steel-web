@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 
 <head>
@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>進度表</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile.css">
     <style>
         body {
             padding: 20px;
@@ -301,7 +302,7 @@
         <div class="stats-card">
             <div class="progress-title">已進料進度</div>
             <div class="progress-circle">
-                <svg class="progress-svg" width="150" height="150">
+                <svg class="progress-svg" viewBox="0 0 150 150" width="150" height="150">
                     <circle class="progress-bg" cx="75" cy="75" r="65"></circle>
                     <circle id="receivedCircle" class="progress-bar received" cx="75" cy="75" r="65"></circle>
                 </svg>
@@ -323,7 +324,7 @@
         <div class="stats-card">
             <div class="progress-title">已吊裝進度</div>
             <div class="progress-circle">
-                <svg class="progress-svg" width="150" height="150">
+                <svg class="progress-svg" viewBox="0 0 150 150" width="150" height="150">
                     <circle class="progress-bg" cx="75" cy="75" r="65"></circle>
                     <circle id="liftedCircle" class="progress-bar lifted" cx="75" cy="75" r="65"></circle>
                 </svg>

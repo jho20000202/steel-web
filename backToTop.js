@@ -45,17 +45,6 @@
         let getScrollTop = () => window.scrollY || document.documentElement.scrollTop;
         let scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // 針對特定頁面的容器處理
-        const pageName = location.pathname.split('/').pop();
-        if (pageName === 'manage.html') {
-            const el = document.getElementById('componentList');
-            if (el) {
-                target = el;
-                getScrollTop = () => el.scrollTop;
-                scrollToTop = () => el.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
-
         // 滾動事件監聽
         target.addEventListener('scroll', () => {
             if (getScrollTop() > 300) {

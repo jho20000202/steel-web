@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 
 <head>
@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>構件管理</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile.css">
     <style>
         body {
             padding: 20px;
@@ -69,9 +70,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            max-height: 70vh;
-            overflow-y: auto;
-            padding-right: 5px;
+            
         }
 
         .component-item {
@@ -302,9 +301,10 @@
             document.getElementById("sortSelect").addEventListener("change", () => renderList(true));
 
             // Add scroll listener for infinite scroll
-            const container = document.getElementById('componentList');
-            container.addEventListener('scroll', () => {
-                if (container.scrollTop + container.clientHeight >= container.scrollHeight - 50) {
+            window.addEventListener('scroll', () => {
+                const scrollPosition = window.innerHeight + window.scrollY;
+                const pageHeight = document.documentElement.scrollHeight;
+                if (scrollPosition >= pageHeight - 200) {
                     if (displayedCount < currentFiltered.length) {
                         renderList(false);
                     }

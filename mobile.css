@@ -1,0 +1,189 @@
+﻿/* 手機響應式設計 - 通用樣式 */
+
+/* 平板及以下 */
+@media (max-width: 768px) {
+    body {
+        padding: 12px !important;
+    }
+
+    /* 標題列 */
+    .header-row {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .header-title {
+        font-size: 20px !important;
+    }
+
+    .back-btn {
+        padding: 8px 16px !important;
+        font-size: 14px !important;
+    }
+
+    /* 搜尋區域 - 修復溢出問題 */
+    .search-section {
+        padding: 12px !important;
+        box-sizing: border-box;
+    }
+
+    .search-box {
+        width: 100% !important;
+        box-sizing: border-box;
+        font-size: 16px !important;
+        /* 防止 iOS 自動縮放 */
+    }
+
+    .search-bar {
+        padding: 12px !important;
+        box-sizing: border-box;
+    }
+
+    /* library.html 搜尋輸入框 */
+    #searchInput {
+        width: 100% !important;
+        box-sizing: border-box;
+        font-size: 16px !important;
+    }
+
+    /* 按鈕容器 */
+    .filter-section {
+        flex-wrap: wrap !important;
+        padding: 12px !important;
+    }
+
+    /* 表單網格 */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* progress.html - 圓形圖保持左右排列 */
+    .progress-section {
+        flex-direction: row !important;
+        gap: 10px !important;
+    }
+
+    .stats-card {
+        padding: 16px 10px !important;
+    }
+
+    .progress-circle {
+        width: 120px !important;
+        height: 120px !important;
+    }
+
+    .progress-svg {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .progress-stats {
+        padding: 0 5% !important;
+        gap: 10px !important;
+    }
+
+    /* 模態框 */
+    .modal-content {
+        width: 95% !important;
+        margin: 10px auto !important;
+        padding: 20px !important;
+        box-sizing: border-box;
+    }
+
+    /* 輸入框 */
+    .input-box,
+    select {
+        font-size: 16px !important;
+        /* 防止 iOS 自動縮放 */
+        box-sizing: border-box;
+    }
+
+    /* 按鈕 */
+    .btn,
+    .primary-btn,
+    .ghost-btn {
+        min-height: 44px;
+        /* 觸控友好 */
+    }
+
+    /* 表格容器 */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 600px;
+    }
+}
+
+/* 手機 */
+@media (max-width: 480px) {
+    body {
+        padding: 10px !important;
+    }
+
+    .header-title {
+        font-size: 18px !important;
+    }
+
+    .search-section {
+        padding: 10px !important;
+    }
+
+    .search-bar {
+        padding: 10px !important;
+    }
+
+    .modal-content {
+        padding: 16px !important;
+    }
+
+    /* progress.html - 極小螢幕圓形圖 */
+    .progress-circle {
+        width: 100px !important;
+        height: 100px !important;
+    }
+
+    .progress-svg {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .progress-text {
+        font-size: 20px !important;
+    }
+
+    .progress-stats {
+        flex-direction: column;
+        gap: 6px !important;
+    }
+
+    .stat-item {
+        border-top: 1px solid #2f3340;
+        padding-top: 6px;
+    }
+
+    .stat-item:first-child {
+        border-top: none;
+        padding-top: 0;
+    }
+
+    /* 卡片 */
+    .component-card,
+    .progress-card,
+    .stats-card {
+        padding: 12px !important;
+    }
+
+    /* 字體大小 */
+    .card-id,
+    .item-id {
+        font-size: 16px !important;
+    }
+
+    .item-detail,
+    .card-details {
+        font-size: 13px !important;
+    }
+}

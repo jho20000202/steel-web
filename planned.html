@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 
 <head>
@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>預計進料登記</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile.css">
     <style>
         body {
             padding: 20px;
@@ -442,11 +443,20 @@
                 return;
             }
 
-            const usedPositions = plannedItems
-                .filter(p => p.item_id === itemId)
-                .map(p => p.position);
+            // 獲取所有已使用的位置（從 planned, confirm, finished 三個表）
+            const [plannedRes, confirmRes, finishedRes] = await Promise.all([
+                db.from('planned').select('position').eq('item_id', itemId),
+                db.from('confirm').select('position').eq('item_id', itemId),
+                db.from('finished').select('position').eq('item_id', itemId)
+            ]);
 
-            const unusedPositions = availablePositions.filter(p => !usedPositions.includes(p));
+            const usedPositions = new Set([
+                ...(plannedRes.data || []).map(p => p.position),
+                ...(confirmRes.data || []).map(p => p.position),
+                ...(finishedRes.data || []).map(p => p.position)
+            ]);
+
+            const unusedPositions = availablePositions.filter(p => !usedPositions.has(p));
 
             if (unusedPositions.length === 0) {
                 positionSelect.innerHTML = '<option value="">所有位置已登記</option>';
@@ -479,18 +489,22 @@
                 return;
             }
 
-            const { error } = await db.from('planned').insert([{
+            const { error } = await db.from('planned').upsert([{
                 item_id: itemId,
                 position: position,
                 planned_date: plannedDate,
                 qty: qty
-            }]);
+            }], {
+                onConflict: 'item_id,position'
+            });
 
             if (error) {
-                if (error.code === '23505') { alert('此構件編號和位置已經登記過了'); }
-                else { alert('登記失敗：' + error.message); }
+                console.error('Upsert error:', error);
+                alert('登記失敗：' + error.message);
                 return;
             }
+
+            alert(' 登記成功！');
 
             document.getElementById('itemId').value = '';
             document.getElementById('position').innerHTML = '<option value="">請先選擇構件編號</option>';

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 
 <head>
@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>構件庫管理</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="mobile.css">
     <style>
         body {
             padding: 20px;
@@ -105,7 +104,8 @@
             flex-direction: column;
             gap: 12px;
             padding: 16px;
-            
+            max-height: 600px;
+            overflow-y: auto;
         }
 
         .component-card {
@@ -266,33 +266,6 @@
 
         .close-btn:hover {
             color: #fff;
-        }
-
-        .drawing-selection-item {
-            background: #252b3b;
-            padding: 16px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-        }
-
-        .drawing-selection-item:hover {
-            background: #2f3545;
-            border-color: #3d7bff;
-        }
-
-        .drawing-item-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-
-        .drawing-item-info {
-            font-size: 14px;
-            color: #aaa;
         }
     </style>
 </head>
@@ -479,11 +452,10 @@
             }
         }
 
-        window.addEventListener('scroll', () => {
+        document.getElementById('cardList').addEventListener('scroll', () => {
             if (displayedCount >= filteredItems.length) return;
-            const scrollPosition = window.innerHeight + window.scrollY;
-            const pageHeight = document.documentElement.scrollHeight;
-            if (scrollPosition >= pageHeight - 200) renderCards(false);
+            const container = document.getElementById('cardList');
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 50) renderCards(false);
         });
 
         async function addItem() {
@@ -593,20 +565,6 @@
         }
     </script>
     <script src="drawingPreview.js"></script>
-    <script src="backToTop.js"></script>
-    <!-- Drawing Selection Modal -->
-    <div id="drawingSelectionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title" id="drawingSelectionTitle">選擇圖面</div>
-                <span class="close-btn" onclick="closeDrawingSelection()">&times;</span>
-            </div>
-            <div id="drawingSelectionList" style="max-height: 60vh; overflow-y: auto;">
-                <!-- Drawing selection items will be inserted here -->
-            </div>
-        </div>
-    </div>
-
 
     <!-- Drawing Preview Modal -->
     <div id="drawingModal" class="modal">

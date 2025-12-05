@@ -232,22 +232,125 @@
 
         /* 響應式設計 */
         @media (max-width: 768px) {
-            /* 保持 2欄排列 & 左右排列，不強制變為單欄 */
-            /* .menu-grid { grid-template-columns: 1fr; } */
-            /* .progress-container { flex-direction: column; } */
-
-            .row-btns {
-                flex-direction: column;
+            body {
+                padding: 0;
             }
 
-            /* 調整圓環大小以適應手機 */
+            main {
+                padding: 0;
+            }
+
+            .menu-grid {
+                margin: 12px;
+                gap: 10px;
+            }
+
+            .menu-btn {
+                padding: 20px 14px;
+                font-size: 16px;
+            }
+
+            /* 進度卡片保持左右排列 */
+            .progress-section {
+                margin: 12px;
+            }
+
+            .progress-container {
+                gap: 10px;
+            }
+
+            .progress-card {
+                padding: 16px 12px;
+            }
+
+            /* 調整圓環大小 */
+            .chart-container {
+                width: 120px;
+                height: 120px;
+            }
+
             .circle-svg {
                 width: 120px;
                 height: 120px;
             }
 
-            .progress-container {
-                gap: 10px;
+            /* 備忘欄和備份區域 */
+            .memo-section,
+            .backup-section {
+                margin: 12px;
+                padding: 16px;
+            }
+
+            .row-btns {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .ghost-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+
+        /* 極小螢幕優化 */
+        @media (max-width: 480px) {
+            .menu-grid {
+                margin: 10px;
+                gap: 8px;
+            }
+
+            .menu-btn {
+                padding: 18px 12px;
+                font-size: 15px;
+            }
+
+            .progress-section {
+                margin: 10px;
+            }
+
+            .progress-card {
+                padding: 16px;
+            }
+
+            /* 進一步縮小圓環 */
+            .chart-container {
+                width: 100px;
+                height: 100px;
+            }
+
+            .circle-svg {
+                width: 100px;
+                height: 100px;
+            }
+
+            .card-title {
+                font-size: 14px;
+                margin-bottom: 16px;
+            }
+
+            .footer-stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .stat-item {
+                border-top: 1px solid #2f3340;
+                padding-top: 8px;
+            }
+
+            .stat-item:first-child {
+                border-top: none;
+                padding-top: 0;
+            }
+
+            .memo-section,
+            .backup-section {
+                margin: 10px;
+                padding: 14px;
+            }
+
+            .section-title {
+                font-size: 16px;
             }
         }
     </style>
