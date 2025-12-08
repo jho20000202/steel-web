@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>皆豪工程管理系統</title>
+    <title>鋼構部 - 系統選擇</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         body {
@@ -167,11 +167,6 @@
             color: #ffc107;
         }
 
-        .status-in-progress {
-            background: rgba(255, 152, 0, 0.2);
-            color: #ff9800;
-        }
-
         /* 響應式設計 */
         @media (max-width: 768px) {
             .page-title {
@@ -195,11 +190,15 @@
 </head>
 
 <body>
+    <header class="top-bar">
+        <div class="top-bar-title">鋼構部管理系統</div>
+        <a href="index.html" class="back-btn">返回首頁</a>
+    </header>
 
     <div class="container">
         <div class="page-header">
-            <h1 class="page-title">皆豪工程管理系統</h1>
-            <p class="page-subtitle">Jie-Hao Engineering Management System</p>
+            <h1 class="page-title">鋼構部</h1>
+            <p class="page-subtitle">Steel Structure Department</p>
         </div>
 
         <div class="system-grid">
@@ -211,31 +210,31 @@
             </div>
 
             <!-- 施工圖面 -->
-            <div class="system-card active" onclick="window.location.href='drawings.html'">
+            <div class="system-card coming-soon">
                 <div class="system-name">施工圖面</div>
                 <div class="system-desc">Construction Drawings</div>
-                <span class="status-badge status-in-progress">製作中</span>
+                <span class="status-badge status-coming">⏳ Coming Soon</span>
             </div>
 
             <!-- 電焊管理 -->
             <div class="system-card coming-soon">
                 <div class="system-name">電焊管理</div>
                 <div class="system-desc">Welding Management</div>
-                <span class="status-badge status-coming">Coming Soon</span>
+                <span class="status-badge status-coming">⏳ Coming Soon</span>
             </div>
 
             <!-- 防火漆管理 -->
             <div class="system-card coming-soon">
                 <div class="system-name">防火漆管理</div>
                 <div class="system-desc">Fireproof Paint Management</div>
-                <span class="status-badge status-coming">Coming Soon</span>
+                <span class="status-badge status-coming">⏳ Coming Soon</span>
             </div>
 
             <!-- 機具管理 -->
             <div class="system-card coming-soon">
                 <div class="system-name">機具管理</div>
                 <div class="system-desc">Equipment Management</div>
-                <span class="status-badge status-coming">Coming Soon</span>
+                <span class="status-badge status-coming">⏳ Coming Soon</span>
             </div>
         </div>
     </div>
