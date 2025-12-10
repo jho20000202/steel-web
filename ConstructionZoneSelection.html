@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>皆豪工程管理系統</title>
+    <title>施工圖面 - 棟別選擇</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         body {
@@ -120,17 +120,6 @@
             cursor: pointer;
         }
 
-        .system-card.coming-soon {
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .system-card.coming-soon:hover {
-            transform: translateY(-3px);
-            border-color: #555;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-        }
-
         .system-name {
             font-size: 24px;
             font-weight: 700;
@@ -162,16 +151,6 @@
             color: #3d7bff;
         }
 
-        .status-coming {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
-        }
-
-        .status-in-progress {
-            background: rgba(255, 152, 0, 0.2);
-            color: #ff9800;
-        }
-
         /* 響應式設計 */
         @media (max-width: 768px) {
             .page-title {
@@ -195,60 +174,25 @@
 </head>
 
 <body>
+    <div class="header-row" style="padding: 20px 40px; display: flex; justify-content: flex-end;">
+        <a href="index.html" class="back-btn">返回上一頁</a>
+    </div>
 
     <div class="container">
         <div class="page-header">
-            <h1 class="page-title">皆豪工程管理系統</h1>
-            <p class="page-subtitle">Jie-Hao Engineering Management System</p>
+            <h1 class="page-title">施工圖面 - 棟別選擇</h1>
+            <p class="page-subtitle">Select Building Zone</p>
         </div>
 
         <div class="system-grid">
-            <!-- 鋼構進出料記錄系統 -->
-            <div class="system-card active" onclick="window.location.href='SteelMaterial.html'">
-                <div class="system-name">鋼構進出料記錄系統</div>
-                <div class="system-desc">Material Tracking System</div>
-                <span class="status-badge status-active">● 已啟用</span>
-            </div>
-
-            <!-- 施工圖面 -->
-            <div class="system-card active" onclick="window.location.href='ConstructionZoneSelection.html'">
-                <div class="system-name">施工圖面</div>
-                <div class="system-desc">Construction Drawings</div>
-                <span class="status-badge status-active">● 已啟用</span>
-            </div>
-
-            <!-- 機具管理 -->
-            <div class="system-card active">
-                <div class="system-name">機具管理</div>
-                <div class="system-desc">Equipment Management</div>
-                <span class="status-badge status-in-progress">製作中</span>
-            </div>
-
-            <!-- 電焊管理 -->
-            <div class="system-card coming-soon">
-                <div class="system-name">電焊管理</div>
-                <div class="system-desc">Welding Management</div>
-                <span class="status-badge status-coming">Coming Soon</span>
-            </div>
-
-            <!-- 防火漆管理 -->
-            <div class="system-card coming-soon">
-                <div class="system-name">防火漆管理</div>
-                <div class="system-desc">Fireproof Paint Management</div>
-                <span class="status-badge status-coming">Coming Soon</span>
+            <!-- EUV棟 -->
+            <div class="system-card active" onclick="window.location.href='construction_drawings.html'">
+                <div class="system-name">EUV棟</div>
+                <div class="system-desc">EUV Building</div>
+                <span class="status-badge status-active">● 選擇此棟</span>
             </div>
         </div>
     </div>
-
-    <script>
-        // 防止點擊 coming soon 卡片
-        document.querySelectorAll('.coming-soon').forEach(card => {
-            card.addEventListener('click', (e) => {
-                e.preventDefault();
-                alert('！');
-            });
-        });
-    </script>
 </body>
 
 </html>
