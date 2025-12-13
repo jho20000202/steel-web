@@ -487,37 +487,63 @@
             if (!db) return;
 
             try {
-                // Fetch all data
-                const { data: components, error: compError } = await db.from("components").select("item_id, weight");
+                // Fetch all data with necessary fields
+                const { data: components, error: compError } = await db.from("components").select("item_id, position, weight, qty");
                 if (compError) throw compError;
 
-                const { data: confirmed, error: confError } = await db.from("confirm").select("item_id");
+                const { data: confirmed, error: confError } = await db.from("confirm").select("item_id, position, qty");
                 if (confError) throw confError;
 
-                const { data: finished, error: finError } = await db.from("finished").select("item_id");
+                const { data: finished, error: finError } = await db.from("finished").select("item_id, position, qty");
                 if (finError) throw finError;
 
-                // Create a map of item_id to weight
-                const weightMap = new Map();
+                // Create a map of "item_id|position" to component details
+                const compMap = new Map();
                 components.forEach(comp => {
-                    weightMap.set(comp.item_id, Number(comp.weight) || 0);
+                    const key = `${comp.item_id}|${comp.position}`;
+                    compMap.set(key, {
+                        weight: Number(comp.weight) || 0,
+                        qty: Number(comp.qty) || 1
+                    });
                 });
 
-                // Calculate totals
-                const totalCount = components.length;
-                const totalWeight = components.reduce((sum, item) => sum + (Number(item.weight) || 0), 0);
+                // Calculate totals (Sum of qty, Sum of weight * qty)
+                let totalCount = 0;
+                let totalWeight = 0;
+                components.forEach(comp => {
+                    const q = Number(comp.qty) || 1;
+                    const w = Number(comp.weight) || 0;
+                    totalCount += q;
+                    totalWeight += w * q;
+                });
 
                 // Calculate received (confirmed items)
-                const receivedCount = confirmed.length;
-                const receivedWeight = confirmed.reduce((sum, item) => {
-                    return sum + (weightMap.get(item.item_id) || 0);
-                }, 0);
+                let receivedCount = 0;
+                let receivedWeight = 0;
+                confirmed.forEach(item => {
+                    const q = Number(item.qty) || 1;
+                    receivedCount += q;
+
+                    const key = `${item.item_id}|${item.position}`;
+                    const comp = compMap.get(key);
+                    if (comp) {
+                        receivedWeight += comp.weight * q;
+                    }
+                });
 
                 // Calculate lifted (finished items)
-                const liftedCount = finished.length;
-                const liftedWeight = finished.reduce((sum, item) => {
-                    return sum + (weightMap.get(item.item_id) || 0);
-                }, 0);
+                let liftedCount = 0;
+                let liftedWeight = 0;
+                finished.forEach(item => {
+                    const q = Number(item.qty) || 1;
+                    liftedCount += q;
+
+                    const key = `${item.item_id}|${item.position}`;
+                    const comp = compMap.get(key);
+                    if (comp) {
+                        liftedWeight += comp.weight * q;
+                    }
+                });
 
                 // Update UI
                 updateCard('received', receivedCount, totalCount, receivedWeight, totalWeight);

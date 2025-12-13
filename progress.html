@@ -395,9 +395,9 @@
         }
 
         function updateProgress() {
-            const totalComponents = allComponents.length;
-            const receivedCount = confirmedItems.length;
-            const liftedCount = finishedItems.length;
+            const totalComponents = allComponents.reduce((sum, c) => sum + (parseInt(c.qty) || 1), 0);
+            const receivedCount = confirmedItems.reduce((sum, c) => sum + (parseInt(c.qty) || 1), 0);
+            const liftedCount = finishedItems.reduce((sum, c) => sum + (parseInt(c.qty) || 1), 0);
 
             const totalWeight = allComponents.reduce((sum, c) => sum + (parseFloat(c.weight) || 0) * (parseInt(c.qty) || 1), 0);
             const receivedWeight = confirmedItems.reduce((sum, item) => {
