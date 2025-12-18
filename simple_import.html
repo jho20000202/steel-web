@@ -241,6 +241,7 @@
 
         // 暫存處理後的資料
         let importBuffers = {
+            planned: [],
             confirm: [],
             finished: []
         };
@@ -259,6 +260,11 @@
             const file = event.target.files[0];
             if (!file) return;
 
+            if (typeof XLSX === 'undefined') {
+                alert('錯誤：Excel 解析庫 (SheetJS) 未載入。請確認網路連線或重新整理頁面。');
+                return;
+            }
+
             showLoading('讀取 Excel 檔案...');
 
             const reader = new FileReader();
@@ -267,7 +273,7 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
 
                     if (jsonData.length === 0) {
                         alert('檔案內容為空');
@@ -275,7 +281,16 @@
                         return;
                     }
 
-                    await autoAssignPositions(jsonData, type);
+                    // Pre-process data to normalize keys (trim spaces)
+                    const normalizedData = jsonData.map(row => {
+                        const newRow = {};
+                        for (let key in row) {
+                            newRow[key.trim()] = row[key];
+                        }
+                        return newRow;
+                    });
+
+                    await autoAssignPositions(normalizedData, type);
                 } catch (err) {
                     console.error(err);
                     alert('處理失敗：' + err.message);
@@ -288,145 +303,198 @@
         async function autoAssignPositions(rawData, type) {
             showLoading('正在查詢構件庫與分配位置...');
 
-            // 1. 整理輸入資料，合併相同構件編號的數量 (暫時不需要合併，因為每行可能有不同日期，但為了分配位置，我們需要知道每個 item_id 總共要多少個位置)
-            // 由於需要保留原始每一行的日期資訊，我們逐行處理，但在分配前先統計每個 item_id 的需求量與當前使用量
+            // Clear buffers relevant to this operation
+            if (type === 'confirm') {
+                importBuffers.planned = [];
+                importBuffers.confirm = [];
+            } else if (type === 'finished') {
+                importBuffers.planned = [];
+                importBuffers.confirm = [];
+                importBuffers.finished = [];
+            }
 
-            // 取得所有涉及的 item_id
-            const itemIds = [...new Set(rawData.map(row => String(row.item_id || row['構件編號'] || '').trim()).filter(id => id))];
+            // Helper to find value by potential keys
+            const findVal = (row, keys) => {
+                for (const k of keys) {
+                    if (row[k] !== undefined && row[k] !== "") return row[k];
+                }
+                return null;
+            };
+
+            const keys_id = ['item_id', '構件編號', '編號', 'ID', 'Item ID'];
+            const keys_qty = ['qty', '數量', '進料數量', '吊裝數量', 'Quantity'];
+            const keys_date = type === 'confirm'
+                ? ['confirmed_date', '進料日期', '日期', 'Date']
+                : ['lifted_date', '吊裝日期', '日期', 'Date'];
+
+            // 1. Get all Item IDs
+            const itemIds = [...new Set(rawData.map(row => {
+                const val = findVal(row, keys_id);
+                return val ? String(val).trim() : null;
+            }).filter(id => id))];
 
             if (itemIds.length === 0) {
-                alert('找不到構件編號欄位');
+                const foundHeaders = Object.keys(rawData[0]).join(', ');
+                alert(`錯誤：找不到「構件編號」欄位。\n請確認 Excel 包含以下任一欄位名稱：${keys_id.join(', ')}\n\n(偵測到的欄位：${foundHeaders})`);
                 hideLoading();
                 return;
             }
 
-            // 2. 批量查詢 components (取得所有合法位置)
-            // 由於 Supabase url 長度限制，如果 itemIds 太多可能要分批，這裡先假設數量級還好，或者直接查全表過濾 (效率較差)
-            // 比較好的方式是用 .in()
-
-            let allComponentPositions = {}; // { itemId: [pos1, pos2, ...] }
-
-            // 分批查詢 components
+            // 2. Batch query components
+            let allComponentPositions = {};
             const CHUNK_SIZE = 100;
-            for (let i = 0; i < itemIds.length; i += CHUNK_SIZE) {
-                const chunk = itemIds.slice(i, i + CHUNK_SIZE);
-                const { data, error } = await db
-                    .from('components')
-                    .select('item_id, position')
-                    .in('item_id', chunk)
-                    .order('position', { ascending: true }); // 重要：由小到大排序
 
-                if (error) throw error;
+            try {
+                // Query Components
+                for (let i = 0; i < itemIds.length; i += CHUNK_SIZE) {
+                    const chunk = itemIds.slice(i, i + CHUNK_SIZE);
+                    const { data, error } = await db
+                        .from('components')
+                        .select('item_id, position')
+                        .in('item_id', chunk)
+                        .order('position', { ascending: true });
 
-                if (data) {
-                    data.forEach(row => {
-                        if (!allComponentPositions[row.item_id]) {
-                            allComponentPositions[row.item_id] = [];
-                        }
-                        allComponentPositions[row.item_id].push(row.position);
-                    });
-                }
-            }
+                    if (error) throw new Error('查詢構件庫失敗: ' + error.message);
 
-            // 3. 查詢已佔用的位置 (Target Table)
-            // 如果是匯入 confirm，則查詢 confirm 表中這些 item_id 已有的位置
-            // 如果是匯入 finished，則查詢 finished 表
-            let occupiedPositions = {}; // { itemId: Set(pos1, pos2) }
-
-            for (let i = 0; i < itemIds.length; i += CHUNK_SIZE) {
-                const chunk = itemIds.slice(i, i + CHUNK_SIZE);
-                const { data, error } = await db
-                    .from(type) // 'confirm' or 'finished'
-                    .select('item_id, position')
-                    .in('item_id', chunk);
-
-                if (error) throw error;
-
-                if (data) {
-                    data.forEach(row => {
-                        if (!occupiedPositions[row.item_id]) {
-                            occupiedPositions[row.item_id] = new Set();
-                        }
-                        occupiedPositions[row.item_id].add(row.position);
-                    });
-                }
-            }
-
-            // 4. 開始分配
-            let resultList = [];
-            let errorList = []; // 記錄分配失敗的 (位置不夠)
-
-            // 先建立一個本地的佔用紀錄，因為我們可能在同一個檔案中多次使用同一個 item_id
-            // 複製 DB 佔用狀態
-            let localOccupied = {};
-            itemIds.forEach(id => {
-                localOccupied[id] = new Set(occupiedPositions[id] || []);
-            });
-
-            for (const row of rawData) {
-                const itemId = String(row.item_id || row['構件編號'] || '').trim();
-                const qty = parseInt(row.qty || row['數量'] || row['進料數量'] || row['吊裝數量'] || 1);
-                // 日期欄位判斷
-                let dateVal = null;
-                if (type === 'confirm') {
-                    dateVal = row.confirmed_date || row['進料日期'];
-                } else {
-                    dateVal = row.lifted_date || row['吊裝日期'];
-                }
-
-                if (!itemId) continue;
-
-                // 取得該構件所有可用位置
-                const validPositions = allComponentPositions[itemId] || [];
-
-                // 嘗試分配 qty 個位置
-                let assignedCount = 0;
-
-                for (const pos of validPositions) {
-                    if (assignedCount >= qty) break;
-
-                    if (!localOccupied[itemId].has(pos)) {
-                        // 找到可用位置
-                        localOccupied[itemId].add(pos); // 標記為本次已用
-                        assignedCount++;
-
-                        // 建立匯入物件
-                        let importObj = {
-                            item_id: itemId,
-                            position: pos,
-                            qty: 1 // 拆分成單一構件
-                        };
-
-                        if (type === 'confirm') {
-                            importObj.confirmed_date = formatDateForDB(dateVal);
-                        } else {
-                            importObj.lifted_date = formatDateForDB(dateVal);
-                        }
-
-                        resultList.push(importObj);
+                    if (data) {
+                        data.forEach(row => {
+                            if (!allComponentPositions[row.item_id]) {
+                                allComponentPositions[row.item_id] = [];
+                            }
+                            allComponentPositions[row.item_id].push(row.position);
+                        });
                     }
                 }
 
-                if (assignedCount < qty) {
-                    errorList.push(`構件 ${itemId} 需求 ${qty}，僅能分配 ${assignedCount} 個位置`);
+                // 3. Query occupied positions
+                let occupiedPositions = {};
+
+                for (let i = 0; i < itemIds.length; i += CHUNK_SIZE) {
+                    const chunk = itemIds.slice(i, i + CHUNK_SIZE);
+
+                    // Query Target Table (Confirm/Finished)
+                    const { data: targetData, error: targetError } = await db
+                        .from(type)
+                        .select('item_id, position')
+                        .in('item_id', chunk);
+
+                    if (targetError) throw new Error(`查詢 ${type} 表失敗: ` + targetError.message);
+
+                    if (targetData) {
+                        targetData.forEach(row => {
+                            if (!occupiedPositions[row.item_id]) {
+                                occupiedPositions[row.item_id] = new Set();
+                            }
+                            occupiedPositions[row.item_id].add(row.position);
+                        });
+                    }
                 }
-            }
 
-            if (errorList.length > 0) {
-                alert('部分構件位置不足：\n' + errorList.slice(0, 10).join('\n') + (errorList.length > 10 ? '\n...' : ''));
-            }
+                // 4. Assign Logic
+                let resultList = [];
+                let errorList = [];
+                let localOccupied = {};
+                itemIds.forEach(id => {
+                    localOccupied[id] = new Set(occupiedPositions[id] || []);
+                });
 
-            importBuffers[type] = resultList;
-            renderPreview(type);
-            hideLoading();
+                for (const row of rawData) {
+                    const itemId = String(findVal(row, keys_id) || '').trim();
+                    if (!itemId) continue;
+
+                    let qty = parseInt(findVal(row, keys_qty) || 1);
+                    if (isNaN(qty) || qty < 1) qty = 1;
+
+                    const dateVal = findVal(row, keys_date);
+                    const dateStr = formatDateForDB(dateVal);
+
+                    const validPositions = allComponentPositions[itemId] || [];
+                    let assignedCount = 0;
+
+                    for (const pos of validPositions) {
+                        if (assignedCount >= qty) break;
+
+                        if (!localOccupied[itemId].has(pos)) {
+                            localOccupied[itemId].add(pos);
+                            assignedCount++;
+
+                            // Primary Object
+                            let mainObj = {
+                                item_id: itemId,
+                                position: pos,
+                                qty: 1
+                            };
+
+                            // Dependency Objects
+                            // ALWAYS set planned_date to the import date (User Request)
+                            let plannedObj = {
+                                item_id: itemId,
+                                position: pos,
+                                qty: 1,
+                                planned_date: dateStr
+                            };
+                            importBuffers.planned.push(plannedObj);
+
+                            if (type === 'confirm') {
+                                // Add to confirm
+                                mainObj.confirmed_date = dateStr;
+                                resultList.push(mainObj);
+                            } else if (type === 'finished') {
+                                // Add to confirm (prerequisite) - Force valid confirm
+                                // This will be upserted with ignoreDuplicates=false
+                                let confirmObj = {
+                                    item_id: itemId,
+                                    position: pos,
+                                    qty: 1,
+                                    confirmed_date: dateStr
+                                };
+                                importBuffers.confirm.push(confirmObj);
+
+                                // Add to finished
+                                mainObj.lifted_date = dateStr;
+                                resultList.push(mainObj);
+                            }
+                        }
+                    }
+
+                    if (assignedCount < qty) {
+                        errorList.push(`構件 ${itemId} (需求 ${qty})：僅剩 ${assignedCount} 個可用位置 (總數 ${validPositions.length})`);
+                    }
+                }
+
+                if (errorList.length > 0) {
+                    alert('注意：部分構件位置不足或分配不全\n' + errorList.slice(0, 10).join('\n') + (errorList.length > 10 ? '\n...' : ''));
+                }
+
+                if (resultList.length === 0) {
+                    alert('沒有產生任何可匯入的資料');
+                }
+
+                importBuffers[type] = resultList; // Main buffer
+                renderPreview(type);
+
+            } catch (err) {
+                console.error(err);
+                alert('執行過程發生錯誤：' + err.message);
+            } finally {
+                hideLoading();
+            }
         }
 
         function renderPreview(type) {
             const table = document.getElementById(type + 'Table');
             const section = document.getElementById(type + 'Preview');
             const data = importBuffers[type];
+            const sectionTitle = document.querySelector(`#${type}Preview h4`);
 
             section.style.display = 'block';
+
+            // Update preview title to indicate auto-generated records
+            let extraInfo = '';
+            const planCount = importBuffers.planned.length; // Now equal to valid items
+            if (type === 'confirm') extraInfo = ` (+ 同步更新 Planned)`;
+            if (type === 'finished') extraInfo = ` (+ 同步更新 Planned, Confirm)`;
+            if (sectionTitle) sectionTitle.textContent = `預覽分配結果${extraInfo}`;
 
             let html = `<thead><tr>
                 <th>項次</th>
@@ -453,26 +521,54 @@
         }
 
         async function executeImport(type) {
-            const data = importBuffers[type];
-            if (!data || data.length === 0) return;
+            const mainData = importBuffers[type];
+            if (!mainData || mainData.length === 0) return;
 
-            if (!confirm(`即將匯入 ${data.length} 筆資料到 ${type} 表，確定嗎？`)) return;
+            let msg = `即將匯入 ${mainData.length} 筆資料到 ${type} 表。\n`;
+            if (importBuffers.planned.length > 0) msg += `系統將同步更新 ${importBuffers.planned.length} 筆預計進料日期 (Planned) 與進料日期一致。\n`;
+            if (type === 'finished') msg += `系統將自動檢核並補齊 Confirm 資料。\n`;
+
+            if (!confirm(msg)) return;
 
             showLoading('正在寫入資料庫...');
 
             try {
-                // 分批寫入
                 const CHUNK_SIZE = 100;
-                let success = 0;
-                for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-                    const batch = data.slice(i, i + CHUNK_SIZE);
-                    const { error } = await db.from(type).upsert(batch, { onConflict: 'item_id,position' });
 
-                    if (error) throw error;
-                    success += batch.length;
+                // Helper for batch upsert
+                const batchUpsert = async (table, items, ignoreDuplicates = false) => {
+                    if (!items || items.length === 0) return;
+                    for (let i = 0; i < items.length; i += CHUNK_SIZE) {
+                        const batch = items.slice(i, i + CHUNK_SIZE);
+                        const { error } = await db.from(table).upsert(batch, {
+                            onConflict: 'item_id,position',
+                            ignoreDuplicates: ignoreDuplicates
+                        });
+                        if (error) throw new Error(`寫入 ${table} 失敗: ${error.message}`);
+                    }
+                };
+
+                // 1. Ensure Planned exists
+                // Use ignoreDuplicates=false to force update as requested
+                if (importBuffers.planned.length > 0) {
+                    showLoading(`更新預計進料 (Planned)...`);
+                    await batchUpsert('planned', importBuffers.planned, false);
                 }
 
-                alert(`匯入成功！共 ${success} 筆`);
+                // 2. Ensure Confirm exists (If type is finished)
+                if (type === 'finished') {
+                    showLoading('更新已進料 (Confirm)...');
+                    // For Confirm, implied by "finished" usually means confirmed.
+                    // User didn't strictly say overwrite confirm, but asked for "consistency".
+                    // Safe bet: Update it too.
+                    await batchUpsert('confirm', importBuffers.confirm, false);
+                }
+
+                // 3. Main Import (Upsert -> Update allowed)
+                showLoading(`寫入主要資料 (${type})...`);
+                await batchUpsert(type, mainData, false);
+
+                alert(`匯入成功！共 ${mainData.length} 筆`);
                 window.location.reload();
             } catch (err) {
                 alert('匯入發生錯誤：' + err.message);

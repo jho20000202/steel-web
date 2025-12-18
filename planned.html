@@ -269,6 +269,10 @@
         </div>
         <button class="primary-btn" onclick="addPlannedItem()">登記預計進料</button>
     </div>
+    <div style="margin-bottom: 12px;">
+        <input type="text" id="searchBox" class="input-box" style="width: 100%;" placeholder="搜尋預計進料 (構件編號)..."
+            oninput="renderCards()">
+    </div>
     <div class="cards-container" id="cardsContainer"></div>
 
     <!-- Custom Confirmation Modal -->
@@ -338,57 +342,59 @@
 
         // Main Functions
         async function confirmItem(event, id, itemId, position, plannedDate, qty) {
+            // Optimistic UI: Hide card immediately to speed up user flow
             const btn = document.getElementById(`confirm-${id}`);
-            if (!btn) {
-                alert('錯誤：找不到按鈕元素');
-                return;
+            const card = btn ? btn.closest('.card') : null;
+
+            if (card) {
+                card.style.display = 'none';
             }
 
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳ 處理中...';
-            btn.disabled = true;
+            try {
+                const { error: updateError } = await db.from('planned')
+                    .update({ received_at: new Date().toISOString() })
+                    .eq('id', id);
 
-            const { error: updateError } = await db.from('planned')
-                .update({ received_at: new Date().toISOString() })
-                .eq('id', id);
+                if (updateError) throw new Error('更新簽收時間失敗：' + updateError.message);
 
-            if (updateError) {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                alert('更新簽收時間失敗：' + updateError.message);
-                return;
+                const { error: confirmError } = await db.from('confirm').insert([{
+                    item_id: itemId,
+                    position: position,
+                    planned_date: plannedDate,
+                    qty: qty
+                }]);
+
+                if (confirmError) throw new Error('新增至確認簽收表失敗：' + confirmError.message);
+
+                // Success: Do nothing (Item is already hidden)
+
+            } catch (err) {
+                console.error(err);
+                alert(err.message);
+                // Revert UI on error
+                if (card) {
+                    card.style.display = 'flex';
+                }
             }
-
-            const { error: confirmError } = await db.from('confirm').insert([{
-                item_id: itemId,
-                position: position,
-                planned_date: plannedDate,
-                qty: qty
-            }]);
-
-            if (confirmError) {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                alert('新增至確認簽收表失敗：' + confirmError.message);
-                return;
-            }
-
-            btn.innerHTML = '✓ 已簽收';
-            btn.style.background = '#218838';
-            alert('✅ 簽收成功！\n\n已更新簽收時間並新增至確認簽收表');
-            await loadAllData();
         }
 
         function renderCards() {
             const container = document.getElementById('cardsContainer');
             container.innerHTML = '';
 
-            if (plannedItems.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:#777; padding:40px;">尚無預計進料登記</div>';
+            const searchTerm = document.getElementById('searchBox') ? document.getElementById('searchBox').value.trim().toUpperCase() : '';
+
+            // Filter items based on search
+            const filteredItems = plannedItems.filter(item => {
+                return !searchTerm || item.item_id.toUpperCase().includes(searchTerm);
+            });
+
+            if (filteredItems.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#777; padding:40px;">${searchTerm ? '找不到符合搜尋的預計進料' : '尚無預計進料登記'}</div>`;
                 return;
             }
 
-            plannedItems.forEach(item => {
+            filteredItems.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
@@ -417,7 +423,7 @@
             const { data, error } = await db.from('planned')
                 .select('*')
                 .is('received_at', null)
-                .order('planned_date', { ascending: true });
+                .order('created_at', { ascending: true }); // Sort by creation time (registration order)
             if (error) { console.error('Error loading planned items:', error); return; }
             plannedItems = data || [];
             renderCards();
@@ -508,14 +514,28 @@
 
             document.getElementById('itemId').value = '';
             document.getElementById('position').innerHTML = '<option value="">請先選擇構件編號</option>';
-            document.getElementById('plannedDate').valueAsDate = new Date();
+            // document.getElementById('plannedDate').valueAsDate = new Date(); // Removed to persist date
             document.getElementById('qty').value = '1';
             await loadAllData();
         }
 
+        const DATE_STORAGE_KEY = 'steel_planned_date';
+
+        // Listen for date changes
+        document.getElementById('plannedDate').addEventListener('change', (e) => {
+            localStorage.setItem(DATE_STORAGE_KEY, e.target.value);
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             loadAllData();
-            document.getElementById('plannedDate').valueAsDate = new Date();
+
+            // Restore date from storage or default to today
+            const savedDate = localStorage.getItem(DATE_STORAGE_KEY);
+            if (savedDate) {
+                document.getElementById('plannedDate').value = savedDate;
+            } else {
+                document.getElementById('plannedDate').valueAsDate = new Date();
+            }
         });
     </script>
     <script src="backToTop.js"></script>

@@ -203,6 +203,21 @@
 
     <div class="cards-container" id="cardsContainer"></div>
 
+    <!-- Progress Modal -->
+    <div id="progressModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
+        <div
+            style="background: #2a2b31; padding: 30px; border-radius: 12px; width: 80%; max-width: 400px; text-align: center; border: 1px solid #3e414b;">
+            <h3 style="margin-bottom: 20px;">正在處理中...</h3>
+            <div
+                style="width: 100%; background: #3e414b; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px;">
+                <div id="progressBar" style="width: 0%; height: 100%; background: #3d7bff; transition: width 0.3s;">
+                </div>
+            </div>
+            <div id="progressText" style="color: #aaa;">0 / 0</div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
     <script src="back.js"></script>
     <script>
@@ -213,6 +228,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadConfirmItems();
         });
+
+        const STORAGE_KEY = 'steel_confirm_selection';
 
         async function loadConfirmItems() {
             const { data, error } = await db.from('confirm')
@@ -226,9 +243,30 @@
             }
 
             confirmItems = data || [];
-            selectedItems = new Set(confirmItems.map(item => item.id));
+
+            // Restore selection from localStorage
+            const savedSelection = localStorage.getItem(STORAGE_KEY);
+            if (savedSelection) {
+                try {
+                    const savedIds = JSON.parse(savedSelection);
+                    // Only restore IDs that still exist in the fresh data
+                    const validIds = savedIds.filter(id => confirmItems.some(item => item.id === id));
+                    selectedItems = new Set(validIds);
+                } catch (e) {
+                    console.error('Failed to restore selection:', e);
+                    selectedItems = new Set();
+                }
+            } else {
+                // Default: Select ALL (User Request)
+                selectedItems = new Set(confirmItems.map(item => item.id));
+            }
+
             renderCards();
             updateSelectedCount();
+        }
+
+        function saveSelection() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify([...selectedItems]));
         }
 
         function filterItems() {
@@ -292,6 +330,7 @@
             } else {
                 selectedItems.add(id);
             }
+            saveSelection(); // Save on change
             renderCards();
             updateSelectedCount();
             filterItems();
@@ -303,6 +342,7 @@
             } else {
                 selectedItems = new Set(confirmItems.map(item => item.id));
             }
+            saveSelection(); // Save on change
             renderCards();
             updateSelectedCount();
             filterItems();
@@ -310,7 +350,9 @@
 
         function updateSelectedCount() {
             const count = selectedItems.size;
-            document.getElementById('selectedCount').textContent = `已選擇: ${count} 項`;
+            const total = confirmItems.length;
+            const unselected = total - count;
+            document.getElementById('selectedCount').textContent = `已選擇: ${count} 項 / 未選擇: ${unselected} 項`;
             document.getElementById('confirmBtn').disabled = count === 0;
         }
 
@@ -321,57 +363,85 @@
             }
 
             const confirmBtn = document.getElementById('confirmBtn');
+            const progressModal = document.getElementById('progressModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
             confirmBtn.disabled = true;
-            confirmBtn.textContent = '⏳ 處理中...';
+            progressModal.style.display = 'flex';
 
             const selectedItemsData = confirmItems.filter(item => selectedItems.has(item.id));
+            const totalItems = selectedItemsData.length;
+            const CHUNK_SIZE = 50; // Process 50 items per batch
             const currentTime = new Date().toISOString();
-            let successCount = 0;
+            const currentDay = new Date().toISOString().split('T')[0];
+
+            let processedCount = 0;
             let failCount = 0;
 
-            for (const item of selectedItemsData) {
-                try {
+            try {
+                for (let i = 0; i < totalItems; i += CHUNK_SIZE) {
+                    const chunk = selectedItemsData.slice(i, i + CHUNK_SIZE);
+                    const chunkIds = chunk.map(item => item.id);
+
+                    // 1. Batch Update 'confirm' table
                     const { error: updateError } = await db.from('confirm')
                         .update({ lifted_at: currentTime })
-                        .eq('id', item.id);
+                        .in('id', chunkIds);
 
                     if (updateError) {
-                        console.error('Update error:', updateError);
-                        failCount++;
-                        continue;
-                    }
-
-                    const { error: insertError } = await db.from('finished').insert([{
-                        item_id: item.item_id,
-                        position: item.position,
-                        planned_date: item.planned_date,
-                        confirmed_date: item.confirmed_date,
-                        lifted_date: new Date().toISOString().split('T')[0],
-                        qty: item.qty
-                    }]);
-
-                    if (insertError) {
-                        console.error('Insert error:', insertError);
-                        failCount++;
+                        console.error('Batch update error:', updateError);
+                        failCount += chunk.length; // Assume whole chunk failed
                     } else {
-                        successCount++;
+                        // 2. Batch Insert into 'finished' table (Only if confirm update succeeded)
+                        const finishedPayload = chunk.map(item => ({
+                            item_id: item.item_id,
+                            position: item.position,
+                            planned_date: item.planned_date,
+                            confirmed_date: item.confirmed_date,
+                            lifted_date: currentDay,
+                            qty: item.qty
+                        }));
+
+                        const { error: insertError } = await db.from('finished')
+                            .insert(finishedPayload);
+
+                        if (insertError) {
+                            console.error('Batch insert error:', insertError);
+                            // Note: If insert fails but update succeeded, data might be inconsistent state
+                            // But usually if update works, insert should too unless constraint violation
+                            failCount += chunk.length;
+                        }
                     }
-                } catch (err) {
-                    console.error('Error processing item:', err);
-                    failCount++;
+
+                    processedCount += chunk.length;
+
+                    // Update Progress UI
+                    const percent = Math.min(100, Math.round((processedCount / totalItems) * 100));
+                    progressBar.style.width = percent + '%';
+                    progressText.textContent = `${Math.min(processedCount, totalItems)} / ${totalItems}`;
                 }
+
+                if (failCount > 0) {
+                    alert(`處理完成，但有 ${failCount} 筆項目發生錯誤。請檢查網路或重新整理。`);
+                } else {
+                    // Success - Clear stored selection
+                    localStorage.removeItem(STORAGE_KEY);
+                    selectedItems.clear(); // Clear memory state too
+
+                    // Close modal first for better UX
+                    setTimeout(() => {
+                        alert(`✅ 吊裝確認成功！\n\n共處理 ${totalItems} 項構件`);
+                        window.location.reload(); // Reload to refresh list
+                    }, 500);
+                }
+
+            } catch (err) {
+                console.error('Global error:', err);
+                alert('發生預期外的錯誤: ' + err.message);
+                progressModal.style.display = 'none';
+                confirmBtn.disabled = false;
             }
-
-            confirmBtn.disabled = false;
-            confirmBtn.textContent = '✓ 確認吊裝';
-
-            if (failCount > 0) {
-                alert(`處理完成！\n成功: ${successCount} 項\n失敗: ${failCount} 項`);
-            } else {
-                alert(`✅ 吊裝確認成功！\n\n已處理 ${successCount} 項構件`);
-            }
-
-            await loadConfirmItems();
         }
     </script>
     <script src="backToTop.js"></script>
