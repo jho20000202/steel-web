@@ -1,0 +1,459 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日吊裝記錄</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile.css">
+    <style>
+        body {
+            padding: 20px;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--highlight);
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #2a2a2a;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input-box {
+            padding: 10px 16px;
+            border-radius: 10px;
+            background: #252525;
+            border: 1px solid var(--border);
+            color: #fff;
+            font-size: 15px;
+            max-width: 300px;
+        }
+
+        .input-box:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .select-all-btn,
+        .confirm-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .select-all-btn {
+            background: #555;
+            color: #fff;
+            border: 1px solid var(--border);
+        }
+
+        .select-all-btn:hover {
+            background: #666;
+        }
+
+        .confirm-btn {
+            background: var(--ok);
+            color: #fff;
+        }
+
+        .confirm-btn:hover {
+            background: #218838;
+        }
+
+        .confirm-btn:disabled {
+            background: #444;
+            cursor: not-allowed;
+            color: #888;
+        }
+
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .card.selected {
+            border-color: var(--ok);
+            background: rgba(39, 174, 96, 0.1);
+            /* Subtle Green Tint */
+        }
+
+        .card.unselected {
+            border-color: var(--danger);
+            background: rgba(207, 48, 48, 0.1);
+            /* Subtle Red Tint */
+        }
+
+        .card.hidden {
+            display: none;
+        }
+
+        .card-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .card-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--highlight);
+            min-width: 100px;
+        }
+
+        .card-detail {
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .card-meta {
+            color: var(--muted);
+            font-size: 14px;
+            margin-right: 6px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: var(--primary);
+            /* Gold Checkbox */
+        }
+
+        .checkbox-label {
+            font-size: 15px;
+            color: var(--text);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .checkbox-wrapper {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-row">
+        <div class="header-title">每日吊裝記錄</div>
+        <a href="SteelMaterial.html" class="back-btn">返回主畫面</a>
+    </div>
+
+    <div class="action-bar">
+        <input type="text" id="searchBox" class="input-box" placeholder="搜尋構件編號或位置..." oninput="filterItems()">
+        <button class="select-all-btn" onclick="toggleSelectAll()">全選 / 全不選</button>
+        <button class="confirm-btn" id="confirmBtn" onclick="confirmLifted()">確認吊裝</button>
+        <span id="selectedCount" style="color: #aaa; font-size: 14px;">已選擇: 0 項</span>
+    </div>
+
+    <div class="cards-container" id="cardsContainer"></div>
+
+    <!-- Progress Modal -->
+    <div id="progressModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
+        <div
+            style="background: #2a2b31; padding: 30px; border-radius: 12px; width: 80%; max-width: 400px; text-align: center; border: 1px solid #3e414b;">
+            <h3 style="margin-bottom: 20px;">正在處理中...</h3>
+            <div
+                style="width: 100%; background: #3e414b; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px;">
+                <div id="progressBar"
+                    style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s;">
+                </div>
+            </div>
+            <div id="progressText" style="color: #aaa;">0 / 0</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="back.js"></script>
+    <script>
+        const db = window.supabaseClient;
+        let confirmItems = [];
+        let selectedItems = new Set();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfirmItems();
+        });
+
+        const STORAGE_KEY = 'steel_confirm_selection';
+
+        async function loadConfirmItems() {
+            const { data, error } = await db.from('confirm')
+                .select('*')
+                .is('lifted_at', null)
+                .order('confirmed_date', { ascending: true });
+
+            if (error) {
+                console.error('Error loading confirm items:', error);
+                return;
+            }
+
+            confirmItems = data || [];
+
+            // Restore selection from localStorage
+            const savedSelection = localStorage.getItem(STORAGE_KEY);
+            if (savedSelection) {
+                try {
+                    const savedIds = JSON.parse(savedSelection);
+                    // Only restore IDs that still exist in the fresh data
+                    const validIds = savedIds.filter(id => confirmItems.some(item => item.id === id));
+                    selectedItems = new Set(validIds);
+                } catch (e) {
+                    console.error('Failed to restore selection:', e);
+                    selectedItems = new Set();
+                }
+            } else {
+                // Default: Select ALL (User Request)
+                selectedItems = new Set(confirmItems.map(item => item.id));
+            }
+
+            renderCards();
+            updateSelectedCount();
+        }
+
+        function saveSelection() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify([...selectedItems]));
+        }
+
+        function filterItems() {
+            const searchTerm = document.getElementById('searchBox').value.trim().toUpperCase();
+            const cards = document.querySelectorAll('.card');
+
+            confirmItems.forEach((item, index) => {
+                const card = cards[index];
+                if (!card) return;
+
+                const matchesSearch = !searchTerm ||
+                    item.item_id.toUpperCase().includes(searchTerm) ||
+                    item.position.toUpperCase().includes(searchTerm);
+
+                if (matchesSearch) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+
+            if (confirmItems.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#777; padding:40px;">尚無待吊裝的構件</div>';
+                return;
+            }
+
+            confirmItems.forEach(item => {
+                const isSelected = selectedItems.has(item.id);
+                const card = document.createElement('div');
+                card.className = `card ${isSelected ? 'selected' : 'unselected'}`;
+                card.setAttribute('data-id', item.id);
+                card.innerHTML = `
+                    <div class="card-info">
+                        <div class="card-id">${item.item_id}</div>
+                        <div class="card-detail"><span class="card-meta">位置:</span>${item.position}</div>
+                        <div class="card-detail"><span class="card-meta">預計日期:</span>${item.planned_date || 'N/A'}</div>
+                        <div class="card-detail"><span class="card-meta">簽收日期:</span>${item.confirmed_date || 'N/A'}</div>
+                        <div class="card-detail"><span class="card-meta">數量:</span>${item.qty}</div>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" class="checkbox" id="check-${item.id}" 
+                               ${isSelected ? 'checked' : ''} 
+                               onchange="toggleItem('${item.id}')">
+                        <label class="checkbox-label" for="check-${item.id}">
+                            ${isSelected ? '已吊裝' : '未吊裝'}
+                        </label>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleItem(id) {
+            if (selectedItems.has(id)) {
+                selectedItems.delete(id);
+            } else {
+                selectedItems.add(id);
+            }
+            saveSelection(); // Save on change
+            renderCards();
+            updateSelectedCount();
+            filterItems();
+        }
+
+        function toggleSelectAll() {
+            if (selectedItems.size === confirmItems.length) {
+                selectedItems.clear();
+            } else {
+                selectedItems = new Set(confirmItems.map(item => item.id));
+            }
+            saveSelection(); // Save on change
+            renderCards();
+            updateSelectedCount();
+            filterItems();
+        }
+
+        function updateSelectedCount() {
+            const count = selectedItems.size;
+            const total = confirmItems.length;
+            const unselected = total - count;
+            document.getElementById('selectedCount').textContent = `已選擇: ${count} 項 / 未選擇: ${unselected} 項`;
+            document.getElementById('confirmBtn').disabled = count === 0;
+        }
+
+        async function confirmLifted() {
+            if (selectedItems.size === 0) {
+                alert('請至少選擇一項構件');
+                return;
+            }
+
+            const confirmBtn = document.getElementById('confirmBtn');
+            const progressModal = document.getElementById('progressModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            confirmBtn.disabled = true;
+            progressModal.style.display = 'flex';
+
+            const selectedItemsData = confirmItems.filter(item => selectedItems.has(item.id));
+            const totalItems = selectedItemsData.length;
+            const CHUNK_SIZE = 50; // Process 50 items per batch
+            const currentTime = new Date().toISOString();
+            const currentDay = new Date().toISOString().split('T')[0];
+
+            let processedCount = 0;
+            let failCount = 0;
+
+            try {
+                for (let i = 0; i < totalItems; i += CHUNK_SIZE) {
+                    const chunk = selectedItemsData.slice(i, i + CHUNK_SIZE);
+                    const chunkIds = chunk.map(item => item.id);
+
+                    // 1. Batch Update 'confirm' table
+                    const { error: updateError } = await db.from('confirm')
+                        .update({ lifted_at: currentTime })
+                        .in('id', chunkIds);
+
+                    if (updateError) {
+                        console.error('Batch update error:', updateError);
+                        failCount += chunk.length; // Assume whole chunk failed
+                    } else {
+                        // 2. Batch Insert into 'finished' table (Only if confirm update succeeded)
+                        const finishedPayload = chunk.map(item => ({
+                            item_id: item.item_id,
+                            position: item.position,
+                            planned_date: item.planned_date,
+                            confirmed_date: item.confirmed_date,
+                            lifted_date: currentDay,
+                            qty: item.qty
+                        }));
+
+                        const { error: insertError } = await db.from('finished')
+                            .insert(finishedPayload);
+
+                        if (insertError) {
+                            console.error('Batch insert error:', insertError);
+                            // Note: If insert fails but update succeeded, data might be inconsistent state
+                            // But usually if update works, insert should too unless constraint violation
+                            failCount += chunk.length;
+                        }
+                    }
+
+                    processedCount += chunk.length;
+
+                    // Update Progress UI
+                    const percent = Math.min(100, Math.round((processedCount / totalItems) * 100));
+                    progressBar.style.width = percent + '%';
+                    progressText.textContent = `${Math.min(processedCount, totalItems)} / ${totalItems}`;
+                }
+
+                if (failCount > 0) {
+                    alert(`處理完成，但有 ${failCount} 筆項目發生錯誤。請檢查網路或重新整理。`);
+                } else {
+                    // Success - Clear stored selection
+                    localStorage.removeItem(STORAGE_KEY);
+                    selectedItems.clear(); // Clear memory state too
+
+                    // Close modal first for better UX
+                    setTimeout(() => {
+                        alert(`✅ 吊裝確認成功！\n\n共處理 ${totalItems} 項構件`);
+                        window.location.reload(); // Reload to refresh list
+                    }, 500);
+                }
+
+            } catch (err) {
+                console.error('Global error:', err);
+                alert('發生預期外的錯誤: ' + err.message);
+                progressModal.style.display = 'none';
+                confirmBtn.disabled = false;
+            }
+        }
+    </script>
+    <script src="backToTop.js"></script>
+</body>
+
+</html>

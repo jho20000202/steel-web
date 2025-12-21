@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鋼構進出料記錄系統</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* 主頁面樣式 - 與其他頁面統一 */
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 功能按鈕網格 */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 16px;
+        }
+
+        .menu-btn {
+            background: var(--card);
+            padding: 24px 16px;
+            border-radius: 18px;
+            font-size: 17px;
+            color: var(--highlight);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .menu-btn:hover {
+            background: #242d3f;
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .menu-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 進度卡片 */
+        .progress-section {
+            margin: 16px;
+        }
+
+        .progress-container {
+            display: flex;
+            gap: 16px;
+        }
+
+        .progress-card {
+            flex: 1;
+            background: var(--card);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            color: var(--muted);
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin-bottom: 20px;
+        }
+
+        /* SVG 圓形進度條 */
+        .circle-svg {
+            width: 140px;
+            height: 140px;
+            transform: rotate(-90deg);
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: #2a303c;
+            stroke-width: 12;
+        }
+
+        .circle-progress-bar {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .circle-progress-bar.received {
+            stroke: var(--ok);
+        }
+
+        .circle-progress-bar.lifted {
+            stroke: var(--primary);
+        }
+
+        .card-footer {
+            width: 100%;
+            text-align: center;
+        }
+
+        .footer-title {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .footer-stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* 備忘欄 */
+        .memo-section {
+            background: #141821;
+            margin: 16px;
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .memo-input {
+            width: 100%;
+            height: 100px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            color: #fff;
+            font-size: 15px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .memo-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* 備份區域 */
+        .backup-section {
+            background: #141821;
+            margin: 16px;
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            color: var(--highlight);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .row-btns {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .ghost-btn {
+            flex: 1;
+            padding: 14px 18px;
+            background: #1e2737;
+            color: #fff;
+            border-radius: 14px;
+            font-size: 15px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .ghost-btn:hover {
+            background: #2a3447;
+            border-color: var(--primary);
+        }
+
+        .danger-btn {
+            background: var(--danger);
+            color: #fff;
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .danger-btn:hover {
+            background: #c82333;
+        }
+
+        .danger-btn.full {
+            width: 100%;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            main {
+                padding: 0;
+            }
+
+            .menu-grid {
+                margin: 12px;
+                gap: 10px;
+            }
+
+            .menu-btn {
+                padding: 20px 14px;
+                font-size: 16px;
+            }
+
+            /* 進度卡片保持左右排列 */
+            .progress-section {
+                margin: 12px;
+            }
+
+            .progress-container {
+                gap: 10px;
+            }
+
+            .progress-card {
+                padding: 16px 12px;
+            }
+
+            /* 調整圓環大小 */
+            .chart-container {
+                width: 120px;
+                height: 120px;
+            }
+
+            .circle-svg {
+                width: 120px;
+                height: 120px;
+            }
+
+            /* 備忘欄和備份區域 */
+            .memo-section,
+            .backup-section {
+                margin: 12px;
+                padding: 16px;
+            }
+
+            .row-btns {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .ghost-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+
+        /* 極小螢幕優化 */
+        @media (max-width: 480px) {
+            .menu-grid {
+                margin: 10px;
+                gap: 8px;
+            }
+
+            .menu-btn {
+                padding: 18px 12px;
+                font-size: 15px;
+            }
+
+            .progress-section {
+                margin: 10px;
+            }
+
+            .progress-card {
+                padding: 16px;
+            }
+
+            /* 進一步縮小圓環 */
+            .chart-container {
+                width: 100px;
+                height: 100px;
+            }
+
+            .circle-svg {
+                width: 100px;
+                height: 100px;
+            }
+
+            .card-title {
+                font-size: 14px;
+                margin-bottom: 16px;
+            }
+
+            .footer-stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .stat-item {
+                border-top: 1px solid #2f3340;
+                padding-top: 8px;
+            }
+
+            .stat-item:first-child {
+                border-top: none;
+                padding-top: 0;
+            }
+
+            .memo-section,
+            .backup-section {
+                margin: 10px;
+                padding: 14px;
+            }
+
+            .section-title {
+                font-size: 16px;
+            }
+        }
+
+        .back-btn {
+            padding: 8px 20px;
+            background: var(--card);
+            color: var(--text);
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+            font-size: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .back-btn:hover {
+            background: #2a2a2a;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 頂部標題 -->
+    <header class="top-bar">
+        <div class="top-bar-title">鋼構進出料記錄系統</div>
+        <a href="index.html" class="back-btn">返回上一頁</a>
+    </header>
+
+    <main>
+
+        <!-- 六大功能按鈕 -->
+        <section class="menu-grid">
+            <button class="menu-btn" onclick="location.href='planned.html'">預計進料登記</button>
+            <button class="menu-btn" onclick="location.href='confirm.html'">每日吊裝記錄</button>
+            <button class="menu-btn" onclick="location.href='manage.html'">構件管理</button>
+            <button class="menu-btn" onclick="location.href='library.html'">構件庫</button>
+            <button class="menu-btn" onclick="location.href='progress.html'">進度表</button>
+            <button class="menu-btn" onclick="location.href='report.html'">報表匯出</button>
+        </section>
+
+
+        <!-- 圓環進度總覽 -->
+        <section class="progress-section">
+            <div class="progress-container">
+                <!-- 已進料進度 -->
+                <div class="progress-card">
+                    <div class="card-title">已進料進度</div>
+                    <div class="chart-container">
+                        <svg class="circle-svg" viewBox="0 0 160 160">
+                            <circle class="circle-bg" cx="80" cy="80" r="70"></circle>
+                            <circle id="circleReceived" class="circle-progress-bar received" cx="80" cy="80" r="70"
+                                stroke-dasharray="439.82" stroke-dashoffset="439.82"></circle>
+                            <text x="80" y="80" text-anchor="middle" dy="0.3em" font-size="32" font-weight="700"
+                                fill="#fff" id="receivedPct" transform="rotate(90 80 80)">0%</text>
+                        </svg>
+                    </div>
+                    <div class="card-footer">
+                        <div class="footer-title">已簽收構件</div>
+                        <div class="footer-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">構件數</div>
+                                <div class="stat-value" id="receivedCount">0 / 0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">重量</div>
+                                <div class="stat-value" id="receivedWeight">0 / 0 kg</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已吊裝進度 -->
+                <div class="progress-card">
+                    <div class="card-title">已吊裝進度</div>
+                    <div class="chart-container">
+                        <svg class="circle-svg" viewBox="0 0 160 160">
+                            <circle class="circle-bg" cx="80" cy="80" r="70"></circle>
+                            <circle id="circleLifted" class="circle-progress-bar lifted" cx="80" cy="80" r="70"
+                                stroke-dasharray="439.82" stroke-dashoffset="439.82"></circle>
+                            <text x="80" y="80" text-anchor="middle" dy="0.3em" font-size="32" font-weight="700"
+                                fill="#fff" id="liftedPct" transform="rotate(90 80 80)">0%</text>
+                        </svg>
+                    </div>
+                    <div class="card-footer">
+                        <div class="footer-title">已完成吊裝</div>
+                        <div class="footer-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">構件數</div>
+                                <div class="stat-value" id="liftedCount">0 / 0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">重量</div>
+                                <div class="stat-value" id="liftedWeight">0 / 0 kg</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 備忘欄 -->
+        <section class="memo-section">
+            <div class="section-title">備忘欄</div>
+            <textarea id="memoInput" class="memo-input" placeholder="在此輸入備忘事項..."></textarea>
+        </section>
+
+        <!-- 資料備份與還原 -->
+        <section class="backup-section">
+            <div class="section-title">資料備份與還原</div>
+
+            <div class="row-btns">
+                <button class="ghost-btn" onclick="exportBackup()">備份匯出</button>
+                <button class="ghost-btn" onclick="importBackup()">備份匯入</button>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="back.js"></script>
+    <script>
+        const db = window.supabaseClient;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadProgress();
+            loadMemo();
+
+            document.getElementById('memoInput').addEventListener('input', saveMemo);
+        });
+
+        async function loadProgress() {
+            if (!db) return;
+
+            try {
+                // Fetch all data with necessary fields
+                const { data: components, error: compError } = await db.from("components").select("item_id, position, weight, qty");
+                if (compError) throw compError;
+
+                const { data: confirmed, error: confError } = await db.from("confirm").select("item_id, position, qty");
+                if (confError) throw confError;
+
+                const { data: finished, error: finError } = await db.from("finished").select("item_id, position, qty");
+                if (finError) throw finError;
+
+                // Create a map of "item_id|position" to component details
+                const compMap = new Map();
+                components.forEach(comp => {
+                    const key = `${comp.item_id}|${comp.position}`;
+                    compMap.set(key, {
+                        weight: Number(comp.weight) || 0,
+                        qty: Number(comp.qty) || 1
+                    });
+                });
+
+                // Calculate totals (Sum of qty, Sum of weight * qty)
+                let totalCount = 0;
+                let totalWeight = 0;
+                components.forEach(comp => {
+                    const q = Number(comp.qty) || 1;
+                    const w = Number(comp.weight) || 0;
+                    totalCount += q;
+                    totalWeight += w * q;
+                });
+
+                // Calculate received (confirmed items)
+                let receivedCount = 0;
+                let receivedWeight = 0;
+                confirmed.forEach(item => {
+                    const q = Number(item.qty) || 1;
+                    receivedCount += q;
+
+                    const key = `${item.item_id}|${item.position}`;
+                    const comp = compMap.get(key);
+                    if (comp) {
+                        receivedWeight += comp.weight * q;
+                    }
+                });
+
+                // Calculate lifted (finished items)
+                let liftedCount = 0;
+                let liftedWeight = 0;
+                finished.forEach(item => {
+                    const q = Number(item.qty) || 1;
+                    liftedCount += q;
+
+                    const key = `${item.item_id}|${item.position}`;
+                    const comp = compMap.get(key);
+                    if (comp) {
+                        liftedWeight += comp.weight * q;
+                    }
+                });
+
+                // Update UI
+                updateCard('received', receivedCount, totalCount, receivedWeight, totalWeight);
+                updateCard('lifted', liftedCount, totalCount, liftedWeight, totalWeight);
+
+            } catch (err) {
+                console.error("Error loading progress:", err);
+            }
+        }
+
+        function updateCard(type, count, totalCount, weight, totalWeight) {
+            const pct = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+            const circle = document.getElementById(`circle${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            const pctText = document.getElementById(`${type}Pct`);
+            const countText = document.getElementById(`${type}Count`);
+            const weightText = document.getElementById(`${type}Weight`);
+
+            // Update Circle
+            const circumference = 2 * Math.PI * 70; // r=70
+            const offset = circumference - (pct / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            // Update Text
+            pctText.textContent = `${pct}%`;
+            countText.textContent = `${count} / ${totalCount}`;
+            weightText.textContent = `${weight.toLocaleString()} / ${totalWeight.toLocaleString()} kg`;
+        }
+
+        function loadMemo() {
+            const memo = localStorage.getItem('dashboard_memo');
+            if (memo) {
+                document.getElementById('memoInput').value = memo;
+            }
+        }
+
+        function saveMemo(e) {
+            localStorage.setItem('dashboard_memo', e.target.value);
+        }
+    </script>
+
+    <script src="backToTop.js"></script>
+</body>
+
+</html>

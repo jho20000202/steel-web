@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>施工圖面 - 棟別選擇</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .top-bar {
+            background: var(--card);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .back-btn {
+            padding: 8px 20px;
+            background: var(--card);
+            color: var(--text);
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .back-btn:hover {
+            background: #2a2a2a;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 90%;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex: 1;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--highlight);
+            background: none;
+            -webkit-text-fill-color: initial;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: var(--muted);
+        }
+
+        .system-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .system-card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .system-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(195, 164, 14, 0.1) 0%, rgba(233, 211, 84, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .system-card:hover::before {
+            opacity: 1;
+        }
+
+        .system-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 30px rgba(195, 164, 14, 0.15);
+        }
+
+        .system-card.active {
+            cursor: pointer;
+        }
+
+        .system-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+            color: var(--highlight);
+        }
+
+        .system-desc {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .status-active {
+            background: rgba(195, 164, 14, 0.2);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 28px;
+            }
+
+            .system-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .system-card {
+                padding: 24px;
+            }
+
+            .system-name {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-row" style="padding: 20px 40px; display: flex; justify-content: flex-end;">
+        <a href="index.html" class="back-btn">返回上一頁</a>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">施工圖面 - 棟別選擇</h1>
+
+        </div>
+
+        <div class="system-grid">
+            <!-- EUV棟 -->
+            <div class="system-card active" onclick="window.location.href='construction_drawings.html'">
+                <div class="system-name">EUV棟</div>
+
+                <span class="status-badge status-active">● 選擇此棟</span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

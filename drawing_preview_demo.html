@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圖面預覽功能演示</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            padding: 40px;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--highlight);
+            margin-bottom: 30px;
+        }
+
+        .component-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-id {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--highlight);
+        }
+
+        .card-pos {
+            font-size: 14px;
+            color: var(--muted);
+            background: var(--card);
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-label {
+            color: var(--muted);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .view-drawing-btn {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .view-drawing-btn:hover {
+            background: #333;
+        }
+
+        .delete-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background: var(--card);
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 16px;
+            width: 95%;
+            max-width: 1400px;
+            height: 90vh;
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--highlight);
+        }
+
+        .close-btn {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--muted);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: var(--text);
+        }
+
+        .info-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: var(--highlight);
+            margin-top: 0;
+        }
+
+        .info-box ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin: 8px 0;
+            color: var(--text);
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--card);
+            color: var(--text);
+            border-radius: 12px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .back-btn:hover {
+            background: #2a2a2a;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <a href="index.html" class="back-btn">← 返回主畫面</a>
+
+        <h1>📋 圖面預覽功能演示</h1>
+
+        <div class="info-box">
+            <h3>功能說明</h3>
+            <ul>
+                <li>✅ 點擊「📋 查看圖面」按鈕可預覽 Google Drive 中的製造圖</li>
+                <li>✅ 使用模糊匹配自動找到對應圖面（例如：UV0E3 → 預埋鋼板 - UV0E_3-模型）</li>
+                <li>✅ 支援 Google Drive 內建的縮放和導航功能</li>
+                <li>✅ 如果找不到圖面，會顯示友善的錯誤訊息</li>
+            </ul>
+        </div>
+
+        <!-- 示例卡片 1 -->
+        <div class="component-card">
+            <div class="card-header">
+                <div class="card-id">UV0E3</div>
+                <div class="card-pos">1F-A區</div>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">規格</span>
+                <span>H-300x150</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">材質</span>
+                <span>SN490B</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">重量</span>
+                <span>150.5 kg</span>
+            </div>
+            <div class="btn-group">
+                <button class="view-drawing-btn" onclick="viewDrawing('UV0E3')">📋 查看圖面</button>
+                <button class="delete-btn" onclick="alert('刪除功能演示')">刪除構件</button>
+            </div>
+        </div>
+
+        <!-- 示例卡片 2 -->
+        <div class="component-card">
+            <div class="card-header">
+                <div class="card-id">C1-101</div>
+                <div class="card-pos">2F-B區</div>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">規格</span>
+                <span>H-400x200</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">材質</span>
+                <span>SS400</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">重量</span>
+                <span>220.0 kg</span>
+            </div>
+            <div class="btn-group">
+                <button class="view-drawing-btn" onclick="viewDrawing('C1-101')">📋 查看圖面</button>
+                <button class="delete-btn" onclick="alert('刪除功能演示')">刪除構件</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawing Preview Modal -->
+    <div id="drawingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="drawingTitle">📋 製造圖預覽</div>
+                <span class="close-btn" onclick="closeDrawingModal()">&times;</span>
+            </div>
+            <div style="height: calc(100% - 80px); overflow: hidden; background: var(--bg); padding: 20px;">
+                <iframe id="drawingFrame" style="width: 100%; height: 100%; border: none; border-radius: 8px;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="back.js"></script>
+    <script src="drawingPreview.js"></script>
+</body>
+
+</html>

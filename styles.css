@@ -1,0 +1,661 @@
+:root {
+    --bg: #111111;
+    --card: #1d1d1d;
+    --border: #7C722B;
+    /* Olive/Dark Gold */
+    --text: #f0f0f0;
+    --muted: #9aa0a6;
+    --primary: #C3A40E;
+    /* Gold */
+    --highlight: #E9D354;
+    /* Light Gold */
+    --ok: #27ae60;
+    --danger: #cf3030;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif
+}
+
+.section {
+    padding: 16px
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px
+}
+
+.row {
+    display: flex;
+    gap: 12px;
+    align-items: center
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px
+}
+
+.app-title {
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 8px;
+    color: var(--highlight);
+}
+
+.muted {
+    color: var(--muted)
+}
+
+.muted-sm {
+    color: var(--muted);
+    font-size: 12px
+}
+
+.btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer
+}
+
+.btn.primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #000;
+    /* Black text on Gold */
+    font-weight: 600;
+}
+
+.btn.danger {
+    background: var(--danger);
+    border-color: var(--danger)
+}
+
+.btn:disabled {
+    opacity: .6;
+    cursor: not-allowed
+}
+
+.fab-top {
+    position: fixed;
+    right: 16px;
+    bottom: 40px;
+    border-radius: 999px;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center
+}
+
+.progress-ring {
+    width: 120px;
+    height: 120px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    position: relative
+}
+
+.progress-ring .inner {
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-weight: 600
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse
+}
+
+th,
+td {
+    border: 1px solid var(--border);
+    padding: 6px;
+    text-align: left
+}
+
+/* 頂部大卡片 */
+.top-bar {
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 20px;
+    margin: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.top-bar-title {
+    font-size: 20px;
+    color: var(--highlight);
+    font-weight: 700;
+}
+
+.top-bar-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.top-btn {
+    padding: 6px 16px;
+    background: #2a2a2a;
+    color: #fff;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    font-size: 14px;
+}
+
+
+/* 主卡片 */
+.screen-card {
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    margin: 16px;
+    padding: 20px;
+    border-radius: 20px;
+}
+
+.section-title {
+    font-size: 18px;
+    color: var(--highlight);
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+
+/* 六宮格 */
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.menu-btn {
+    background: #252525;
+    border: 1px solid var(--border);
+    padding: 20px 10px;
+    border-radius: 18px;
+    font-size: 17px;
+    color: var(--highlight);
+    transition: background 0.2s;
+}
+
+.menu-btn:hover {
+    background: #2f2f2f;
+}
+
+/* 輸入欄位 */
+.field-label {
+    color: #ccc;
+    margin-top: 10px;
+    display: block;
+}
+
+.input-bar {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    background: #252525;
+    border: 1px solid var(--border);
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.input-bar:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+
+/* 按鈕樣式 */
+.primary-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: #000;
+    font-weight: 700;
+    border-radius: 18px;
+    font-size: 16px;
+    margin-top: 10px;
+    border: none;
+}
+
+.primary-btn:hover {
+    background: #d4b520;
+}
+
+.ghost-btn {
+    padding: 12px 18px;
+    background: #2a2a2a;
+    border: 1px solid var(--border);
+    color: #fff;
+    border-radius: 14px;
+    font-size: 15px;
+}
+
+.danger-btn {
+    background: #cf3030;
+    color: #fff;
+    padding: 14px;
+    border-radius: 16px;
+    font-size: 16px;
+    border: none;
+}
+
+.row-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.full {
+    width: 100%;
+    margin-top: 12px;
+}
+
+
+/* 圓環進度 */
+.progress-card {
+    display: flex;
+    justify-content: space-around;
+    padding: 25px 10px;
+}
+
+.progress-wrapper {
+    text-align: center;
+}
+
+.circle-progress {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary) 0%, #333 0%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.circle-text {
+    text-align: center;
+    color: var(--highlight);
+    font-weight: 700;
+}
+
+.progress-bottom {
+    color: #aaa;
+    margin-top: 8px;
+}
+
+/* ==========================================
+   回到頂端按鈕（全域）
+========================================== */
+#backTopBtn {
+    position: fixed;
+    right: 18px;
+    bottom: 22px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(195, 164, 14, 0.3);
+    /* Gold tint */
+    border: 1px solid var(--primary);
+    backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1000;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition:
+        opacity 0.3s ease,
+        transform 0.25s ease,
+        bottom 0.25s ease;
+}
+
+#backTopBtn.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+#backTopBtn:hover {
+    background: rgba(195, 164, 14, 0.5);
+    transform: scale(1.1);
+}
+
+#backTopBtn svg {
+    width: 22px;
+    height: 22px;
+    fill: #fff;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif
+}
+
+.section {
+    padding: 16px
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px
+}
+
+.row {
+    display: flex;
+    gap: 12px;
+    align-items: center
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px
+}
+
+.app-title {
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 8px
+}
+
+.muted {
+    color: var(--muted)
+}
+
+.muted-sm {
+    color: var(--muted);
+    font-size: 12px
+}
+
+.btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer
+}
+
+.btn.primary {
+    background: var(--primary);
+    border-color: var(--primary)
+}
+
+.btn.danger {
+    background: var(--danger);
+    border-color: var(--danger)
+}
+
+.btn:disabled {
+    opacity: .6;
+    cursor: not-allowed
+}
+
+.fab-top {
+    position: fixed;
+    right: 16px;
+    bottom: 40px;
+    border-radius: 999px;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center
+}
+
+.progress-ring {
+    width: 120px;
+    height: 120px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    position: relative
+}
+
+.progress-ring .inner {
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-weight: 600
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse
+}
+
+th,
+td {
+    border: 1px solid var(--border);
+    padding: 6px;
+    text-align: left
+}
+
+/* 頂部大卡片 */
+.top-bar {
+    background: #11161f;
+    padding: 16px;
+    border-radius: 20px;
+    margin: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.top-bar-title {
+    font-size: 20px;
+    color: #fff;
+    font-weight: 700;
+}
+
+.top-bar-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.top-btn {
+    padding: 6px 16px;
+    background: #1e2737;
+    color: #fff;
+    border-radius: 15px;
+    font-size: 14px;
+}
+
+
+/* 主卡片 */
+.screen-card {
+    background: #141821;
+    margin: 16px;
+    padding: 20px;
+    border-radius: 20px;
+}
+
+.section-title {
+    font-size: 18px;
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+
+/* 六宮格 */
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.menu-btn {
+    background: var(--card);
+    padding: 20px 10px;
+    border-radius: 18px;
+    font-size: 17px;
+    color: #fff;
+}
+
+
+/* 輸入欄位 */
+.field-label {
+    color: #aaa;
+    margin-top: 10px;
+    display: block;
+}
+
+.input-bar {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    background: var(--card);
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+
+/* 按鈕樣式 */
+.primary-btn {
+    width: 100%;
+    padding: 14px;
+    background: #2f7dff;
+    color: #fff;
+    border-radius: 18px;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.ghost-btn {
+    padding: 12px 18px;
+    background: #1e2737;
+    color: #fff;
+    border-radius: 14px;
+    font-size: 15px;
+}
+
+.danger-btn {
+    background: #ff4b4b;
+    color: #fff;
+    padding: 14px;
+    border-radius: 16px;
+    font-size: 16px;
+}
+
+.row-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.full {
+    width: 100%;
+    margin-top: 12px;
+}
+
+
+/* 圓環進度 */
+.progress-card {
+    display: flex;
+    justify-content: space-around;
+    padding: 25px 10px;
+}
+
+.progress-wrapper {
+    text-align: center;
+}
+
+.circle-progress {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: conic-gradient(#2f7dff 0%, #222 0%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.circle-text {
+    text-align: center;
+    color: #fff;
+}
+
+.progress-bottom {
+    color: #aaa;
+    margin-top: 8px;
+}
+
+/* ==========================================
+   回到頂端按鈕（全域）
+========================================== */
+#backTopBtn {
+    position: fixed;
+    right: 18px;
+    bottom: 22px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1000;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition:
+        opacity 0.3s ease,
+        transform 0.25s ease,
+        bottom 0.25s ease;
+}
+
+#backTopBtn.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+#backTopBtn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+}
+
+#backTopBtn svg {
+    width: 22px;
+    height: 22px;
+    fill: #fff;
+}
