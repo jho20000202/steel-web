@@ -10,8 +10,8 @@
     <style>
         body {
             padding: 20px;
-            background: #0f1320;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
         }
 
         .header-row {
@@ -24,12 +24,14 @@
         .header-title {
             font-size: 24px;
             font-weight: bold;
+            color: var(--highlight);
         }
 
         .back-btn {
             padding: 10px 20px;
-            background: #2f3340;
-            color: #fff;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
             border-radius: 12px;
             cursor: pointer;
             text-decoration: none;
@@ -37,7 +39,7 @@
         }
 
         .back-btn:hover {
-            background: #3e4452;
+            background: #2a2a2a;
         }
 
         .search-bar {
@@ -50,42 +52,53 @@
             flex: 1;
             padding: 12px;
             border-radius: 12px;
-            border: 1px solid #2f3340;
-            background: #1c2433;
+            border: 1px solid var(--border);
+            background: #252525;
             color: #fff;
             font-size: 16px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         .sort-select {
             padding: 12px;
             border-radius: 12px;
-            border: 1px solid #2f3340;
-            background: #1c2433;
+            border: 1px solid var(--border);
+            background: #252525;
             color: #fff;
             font-size: 16px;
             cursor: pointer;
+        }
+
+        .sort-select:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         .component-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            
         }
 
         .component-item {
-            background: #1c2433;
+            background: var(--card);
             padding: 16px;
             border-radius: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, border-color 0.2s;
+            border: 1px solid var(--border);
         }
 
         .component-item:hover {
             background: #252b3b;
+            border-color: var(--primary);
         }
 
         .item-info {
@@ -96,12 +109,12 @@
         .item-id {
             font-size: 18px;
             font-weight: bold;
-            color: #3d7bff;
+            color: var(--highlight);
         }
 
         .item-detail {
             font-size: 14px;
-            color: #aaa;
+            color: var(--muted);
             margin-top: 4px;
         }
 
@@ -114,22 +127,26 @@
 
         .status-unplanned {
             background: #2f3340;
-            color: #aaa;
+            color: var(--muted);
+            border: 1px solid #444;
         }
 
         .status-planned {
-            background: rgba(61, 123, 255, 0.2);
-            color: #3d7bff;
+            background: rgba(195, 164, 14, 0.2);
+            color: var(--primary);
+            border: 1px solid var(--primary);
         }
 
         .status-received {
-            background: rgba(40, 167, 69, 0.2);
-            color: #28a745;
+            background: rgba(39, 174, 96, 0.2);
+            color: var(--ok);
+            border: 1px solid var(--ok);
         }
 
         .status-lifted {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
+            background: rgba(233, 211, 84, 0.2);
+            color: var(--highlight);
+            border: 1px solid var(--highlight);
         }
 
         .modal {
@@ -150,19 +167,21 @@
         }
 
         .modal-content {
-            background: #1c2433;
+            background: var(--card);
             padding: 24px;
             border-radius: 16px;
             width: 90%;
             max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
+            border: 1px solid var(--border);
         }
 
         .modal-header {
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 20px;
+            color: var(--highlight);
         }
 
         .form-group {
@@ -172,7 +191,7 @@
         .form-label {
             display: block;
             margin-bottom: 8px;
-            color: #aaa;
+            color: var(--muted);
             font-size: 14px;
         }
 
@@ -180,20 +199,30 @@
             width: 100%;
             padding: 10px;
             border-radius: 8px;
-            border: 1px solid #2f3340;
-            background: #0f1320;
+            border: 1px solid var(--border);
+            background: #252525;
             color: #fff;
             box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         .form-select {
             width: 100%;
             padding: 10px;
             border-radius: 8px;
-            border: 1px solid #2f3340;
-            background: #0f1320;
+            border: 1px solid var(--border);
+            background: #252525;
             color: #fff;
             box-sizing: border-box;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         .modal-actions {
@@ -205,22 +234,30 @@
         .btn-save {
             flex: 1;
             padding: 12px;
-            background: #3d7bff;
-            color: #fff;
+            background: var(--primary);
+            color: #000;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
         }
 
+        .btn-save:hover {
+            background: #d4b520;
+        }
+
         .btn-cancel {
             flex: 1;
             padding: 12px;
-            background: #2f3340;
+            background: #333;
             color: #fff;
-            border: none;
+            border: 1px solid var(--border);
             border-radius: 8px;
             cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background: #444;
         }
     </style>
 </head>

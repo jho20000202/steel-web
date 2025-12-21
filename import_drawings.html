@@ -9,32 +9,33 @@
     <style>
         body {
             padding: 40px;
-            background: #0f1320;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
             max-width: 800px;
             margin: 0 auto;
         }
 
         .container {
-            background: #1c2433;
+            background: var(--card);
             border-radius: 16px;
             padding: 30px;
+            border: 1px solid var(--border);
         }
 
         h1 {
-            color: #3d7bff;
+            color: var(--highlight);
             margin-bottom: 10px;
         }
 
         .subtitle {
-            color: #aaa;
+            color: var(--muted);
             margin-bottom: 30px;
             font-size: 14px;
         }
 
         .step {
-            background: #252b3b;
-            border: 1px solid #2f3340;
+            background: #252525;
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
@@ -43,7 +44,7 @@
         .step-title {
             font-size: 18px;
             font-weight: bold;
-            color: #3d7bff;
+            color: var(--highlight);
             margin-bottom: 15px;
         }
 
@@ -61,7 +62,7 @@
             display: block;
             padding: 15px;
             background: #2f3340;
-            border: 2px dashed #3d7bff;
+            border: 2px dashed var(--primary);
             border-radius: 10px;
             text-align: center;
             cursor: pointer;
@@ -70,22 +71,22 @@
 
         .file-label:hover {
             background: #3e4452;
-            border-color: #5a8fff;
+            border-color: #d4b520;
         }
 
         .file-name {
             margin-top: 10px;
-            color: #3d7bff;
+            color: var(--primary);
             font-size: 14px;
         }
 
         .btn {
             width: 100%;
             padding: 15px;
-            background: #3d7bff;
+            background: var(--primary);
             border: none;
             border-radius: 12px;
-            color: #fff;
+            color: #000;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -94,16 +95,18 @@
         }
 
         .btn:hover {
-            background: #2a65e6;
+            background: #d4b520;
         }
 
         .btn:disabled {
             background: #2f3340;
             cursor: not-allowed;
+            color: #888;
         }
 
         .btn-success {
-            background: #28a745;
+            background: var(--ok);
+            color: #fff;
         }
 
         .btn-success:hover {
@@ -113,10 +116,11 @@
         .preview {
             max-height: 300px;
             overflow-y: auto;
-            background: #0f1320;
+            background: #111;
             border-radius: 8px;
             padding: 15px;
             margin-top: 15px;
+            border: 1px solid var(--border);
         }
 
         .preview-table {
@@ -131,15 +135,17 @@
             text-align: left;
             position: sticky;
             top: 0;
+            color: var(--highlight);
         }
 
         .preview-table td {
             padding: 8px;
             border-bottom: 1px solid #2f3340;
+            color: var(--text);
         }
 
         .log {
-            background: #0f1320;
+            background: #111;
             border-radius: 8px;
             padding: 15px;
             margin-top: 15px;
@@ -147,6 +153,7 @@
             overflow-y: auto;
             font-family: monospace;
             font-size: 12px;
+            border: 1px solid var(--border);
         }
 
         .log-item {
@@ -154,29 +161,30 @@
         }
 
         .log-success {
-            color: #28a745;
+            color: var(--ok);
         }
 
         .log-error {
-            color: #ff4b4b;
+            color: var(--danger);
         }
 
         .log-info {
-            color: #17a2b8;
+            color: var(--highlight);
         }
 
         .back-btn {
             display: inline-block;
             padding: 10px 20px;
-            background: #2f3340;
-            color: #fff;
+            background: var(--card);
+            color: var(--text);
             border-radius: 12px;
             text-decoration: none;
             margin-bottom: 20px;
+            border: 1px solid var(--border);
         }
 
         .back-btn:hover {
-            background: #3e4452;
+            background: #2a2a2a;
         }
     </style>
 </head>

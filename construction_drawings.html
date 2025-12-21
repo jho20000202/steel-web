@@ -10,8 +10,8 @@
     <style>
         body {
             padding: 20px;
-            background: #0f1320;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
         }
 
         .header-row {
@@ -24,36 +24,39 @@
         .header-title {
             font-size: 24px;
             font-weight: bold;
+            color: var(--highlight);
         }
 
         .back-btn {
             padding: 10px 20px;
-            background: #2f3340;
-            color: #fff;
+            background: var(--card);
+            color: var(--text);
             border-radius: 12px;
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
+            border: 1px solid var(--border);
         }
 
         .back-btn:hover {
-            background: #3e4452;
+            background: #2a2a2a;
         }
 
         /* 搜尋區域 */
         .search-section {
-            background: #1c2433;
+            background: var(--card);
             padding: 20px;
             border-radius: 16px;
             margin-bottom: 20px;
+            border: 1px solid var(--border);
         }
 
         .search-box {
             width: 100%;
             padding: 14px;
             border-radius: 12px;
-            background: #2a2b31;
-            border: 1px solid #3e414b;
+            background: #252525;
+            border: 1px solid var(--border);
             color: #fff;
             font-size: 16px;
             box-sizing: border-box;
@@ -61,7 +64,7 @@
 
         .search-box:focus {
             outline: none;
-            border-color: #3d7bff;
+            border-color: var(--primary);
         }
 
         /* 圖面卡片列表 */
@@ -72,24 +75,24 @@
         }
 
         .drawing-card {
-            background: #1c2433;
+            background: var(--card);
             border-radius: 16px;
             padding: 20px;
-            border: 1px solid #2f3340;
+            border: 1px solid var(--border);
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .drawing-card:hover {
-            background: #242d3f;
-            border-color: #3d7bff;
+            background: #252b3b;
+            border-color: var(--primary);
             transform: translateY(-2px);
         }
 
         .drawing-id {
             font-size: 18px;
             font-weight: bold;
-            color: #3d7bff;
+            color: var(--highlight);
             margin-bottom: 12px;
         }
 
@@ -106,19 +109,19 @@
         }
 
         .info-label {
-            color: #777;
+            color: var(--muted);
             min-width: 80px;
         }
 
         .info-value {
-            color: #eee;
+            color: var(--text);
             flex: 1;
         }
 
         .no-results {
             text-align: center;
             padding: 60px 20px;
-            color: #777;
+            color: var(--muted);
             font-size: 16px;
         }
 
@@ -141,13 +144,14 @@
         }
 
         .modal-content {
-            background: #1c2433;
+            background: var(--card);
             border-radius: 16px;
             padding: 24px;
             max-width: 95%;
             max-height: 95%;
             overflow: auto;
             position: relative;
+            border: 1px solid var(--border);
         }
 
         .modal-header {
@@ -160,7 +164,7 @@
         .modal-title {
             font-size: 20px;
             font-weight: bold;
-            color: #fff;
+            color: var(--highlight);
         }
 
         .close-btn {
@@ -171,6 +175,7 @@
             padding: 8px 16px;
             cursor: pointer;
             font-size: 14px;
+            border: 1px solid var(--border);
         }
 
         .close-btn:hover {
@@ -188,7 +193,7 @@
         .loading {
             text-align: center;
             padding: 40px;
-            color: #aaa;
+            color: var(--muted);
         }
     </style>
 </head>

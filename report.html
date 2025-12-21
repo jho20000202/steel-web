@@ -11,8 +11,8 @@
     <style>
         body {
             padding: 20px;
-            background: #0f1320;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
             font-family: sans-serif;
         }
 
@@ -26,12 +26,14 @@
         .header-title {
             font-size: 24px;
             font-weight: bold;
+            color: var(--highlight);
         }
 
         .back-btn {
             padding: 10px 20px;
-            background: #2f3340;
-            color: #fff;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
             border-radius: 12px;
             cursor: pointer;
             text-decoration: none;
@@ -39,11 +41,11 @@
         }
 
         .back-btn:hover {
-            background: #3e4452;
+            background: #2a2a2a;
         }
 
         .filter-section {
-            background: #1c2433;
+            background: var(--card);
             padding: 20px;
             border-radius: 16px;
             margin-bottom: 24px;
@@ -51,6 +53,7 @@
             gap: 12px;
             flex-wrap: wrap;
             align-items: end;
+            border: 1px solid var(--border);
         }
 
         .input-group {
@@ -61,15 +64,15 @@
 
         .input-group label {
             font-size: 13px;
-            color: #aaa;
+            color: var(--muted);
         }
 
         .input-box,
         select {
             padding: 12px;
             border-radius: 10px;
-            background: #2a2b31;
-            border: 1px solid #3e414b;
+            background: #252525;
+            border: 1px solid var(--border);
             color: #fff;
             font-size: 15px;
             min-width: 150px;
@@ -78,7 +81,7 @@
         .input-box:focus,
         select:focus {
             outline: none;
-            border-color: #3d7bff;
+            border-color: var(--primary);
         }
 
         .btn {
@@ -92,15 +95,16 @@
         }
 
         .btn-primary {
-            background: #3d7bff;
+            background: var(--primary);
+            color: #000;
         }
 
         .btn-primary:hover {
-            background: #2a65e6;
+            background: #d4b520;
         }
 
         .btn-success {
-            background: #28a745;
+            background: var(--ok);
         }
 
         .btn-success:hover {
@@ -108,18 +112,21 @@
         }
 
         .btn-info {
-            background: #17a2b8;
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
         }
 
         .btn-info:hover {
-            background: #138496;
+            background: #333;
         }
 
         .table-container {
             overflow-x: auto;
-            background: #1c2433;
+            background: var(--card);
             border-radius: 16px;
             padding: 20px;
+            border: 1px solid var(--border);
         }
 
         table {
@@ -132,17 +139,17 @@
         td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #2f3340;
+            border-bottom: 1px solid var(--border);
         }
 
         th {
-            color: #aaa;
+            color: var(--muted);
             font-weight: 600;
             font-size: 14px;
         }
 
         td {
-            color: #eee;
+            color: var(--text);
             font-size: 15px;
         }
 
@@ -158,23 +165,23 @@
         }
 
         .status-planned {
-            background: #007bff;
-            color: #fff;
+            background: rgba(195, 164, 14, 0.2);
+            color: var(--primary);
         }
 
         .status-received {
-            background: #28a745;
-            color: #fff;
+            background: rgba(39, 174, 96, 0.2);
+            color: var(--ok);
         }
 
         .status-lifted {
-            background: #6f42c1;
-            color: #fff;
+            background: rgba(233, 211, 84, 0.2);
+            color: var(--highlight);
         }
 
         .status-none {
-            background: #6c757d;
-            color: #fff;
+            background: #2f3340;
+            color: var(--muted);
         }
     </style>
 </head>

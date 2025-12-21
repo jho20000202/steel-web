@@ -10,8 +10,8 @@
     <style>
         body {
             padding: 20px;
-            background: #0f1320;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
         }
 
         .header-row {
@@ -24,12 +24,14 @@
         .header-title {
             font-size: 24px;
             font-weight: bold;
+            color: var(--highlight);
         }
 
         .back-btn {
             padding: 10px 20px;
-            background: #2f3340;
-            color: #fff;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
             border-radius: 12px;
             cursor: pointer;
             text-decoration: none;
@@ -37,7 +39,7 @@
         }
 
         .back-btn:hover {
-            background: #3e4452;
+            background: #2a2a2a;
         }
 
         .form-grid {
@@ -55,29 +57,29 @@
 
         .input-group label {
             font-size: 13px;
-            color: #aaa;
+            color: var(--muted);
         }
 
         .input-box {
             padding: 12px;
             border-radius: 10px;
-            background: #2a2b31;
-            border: 1px solid #3e414b;
+            background: #252525;
+            border: 1px solid var(--border);
             color: #fff;
             font-size: 15px;
         }
 
         .input-box:focus {
             outline: none;
-            border-color: #3d7bff;
+            border-color: var(--primary);
         }
 
         .primary-btn {
             width: 100%;
             padding: 14px;
-            background: #3d7bff;
+            background: var(--primary);
             border-radius: 12px;
-            color: #fff;
+            color: #000;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -86,18 +88,19 @@
         }
 
         .primary-btn:hover {
-            background: #2a65e6;
+            background: #d4b520;
         }
 
         .list-section {
-            background: #1c2433;
+            background: var(--card);
             border-radius: 16px;
             overflow: hidden;
+            border: 1px solid var(--border);
         }
 
         .search-bar {
             padding: 16px;
-            border-bottom: 1px solid #2f3340;
+            border-bottom: 1px solid var(--border);
         }
 
         .card-list {
@@ -105,12 +108,12 @@
             flex-direction: column;
             gap: 12px;
             padding: 16px;
-            
+
         }
 
         .component-card {
-            background: #252b3b;
-            border: 1px solid #2f3340;
+            background: #252525;
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 16px;
             display: flex;
@@ -121,7 +124,7 @@
         }
 
         .component-card:hover {
-            border-color: #3d7bff;
+            border-color: var(--primary);
         }
 
         .card-header {
@@ -133,25 +136,27 @@
         .card-id {
             font-size: 18px;
             font-weight: bold;
-            color: #3d7bff;
+            color: var(--highlight);
         }
 
         .card-pos {
             font-size: 14px;
-            color: #aaa;
-            background: #1c2433;
+            color: var(--muted);
+            background: var(--card);
             padding: 4px 8px;
             border-radius: 6px;
+            border: 1px solid #444;
         }
 
         .card-details {
             display: none;
-            background: #1c2433;
+            background: var(--card);
             padding: 12px;
             border-radius: 8px;
             font-size: 14px;
-            color: #ccc;
+            color: var(--text);
             line-height: 1.6;
+            margin-top: 8px;
         }
 
         .card-details.show {
@@ -166,7 +171,7 @@
         }
 
         .delete-btn {
-            background: #ff4b4b;
+            background: var(--danger);
             color: #fff;
             border: none;
             padding: 6px 16px;
@@ -174,20 +179,18 @@
             cursor: pointer;
             font-size: 14px;
             pointer-events: auto;
-            /* Ensure clickable */
             position: relative;
             z-index: 10;
-            /* Ensure above other elements */
         }
 
         .delete-btn:hover {
-            background: #e03e3e;
+            background: #c82333;
         }
 
         .view-drawing-btn {
-            background: #17a2b8;
-            color: #fff;
-            border: none;
+            background: #3a3a3a;
+            color: var(--highlight);
+            border: 1px solid var(--highlight);
             padding: 6px 16px;
             border-radius: 6px;
             cursor: pointer;
@@ -199,7 +202,7 @@
         }
 
         .view-drawing-btn:hover {
-            background: #138496;
+            background: #4a4a4a;
         }
 
         .btn-group {
@@ -213,7 +216,7 @@
         .detail-row {
             display: flex;
             justify-content: space-between;
-            border-bottom: 1px solid #2f3340;
+            border-bottom: 1px solid var(--border);
             padding: 4px 0;
         }
 
@@ -222,7 +225,7 @@
         }
 
         .detail-label {
-            color: #777;
+            color: var(--muted);
         }
 
         .modal {
@@ -237,12 +240,13 @@
         }
 
         .modal-content {
-            background: #1c2433;
+            background: var(--card);
             margin: 5% auto;
             padding: 30px;
             border-radius: 16px;
             width: 90%;
             max-width: 600px;
+            border: 1px solid var(--border);
         }
 
         .modal-header {
@@ -255,12 +259,13 @@
         .modal-title {
             font-size: 20px;
             font-weight: bold;
+            color: var(--highlight);
         }
 
         .close-btn {
             font-size: 28px;
             font-weight: bold;
-            color: #aaa;
+            color: var(--muted);
             cursor: pointer;
         }
 
@@ -275,12 +280,12 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
-            border: 2px solid transparent;
+            border: 1px solid var(--border);
         }
 
         .drawing-selection-item:hover {
             background: #2f3545;
-            border-color: #3d7bff;
+            border-color: var(--primary);
         }
 
         .drawing-item-name {
@@ -292,7 +297,7 @@
 
         .drawing-item-info {
             font-size: 14px;
-            color: #aaa;
+            color: var(--muted);
         }
     </style>
 </head>
@@ -304,7 +309,7 @@
     </div>
 
     <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <button class="primary-btn" style="width: auto; background: #3d7bff;" onclick="openModal()">新增構件</button>
+        <button class="primary-btn" style="width: auto; background: var(--primary);" onclick="openModal()">新增構件</button>
         <button class="primary-btn" style="width: auto; background: #28a745;"
             onclick="document.getElementById('excelInput').click()">匯入 Excel</button>
         <button class="primary-btn" style="width: auto; background: #17a2b8;"
@@ -615,7 +620,7 @@
                 <div class="modal-title" id="drawingTitle">📋 製造圖預覽</div>
                 <span class="close-btn" onclick="closeDrawingModal()">&times;</span>
             </div>
-            <div style="height: calc(100% - 80px); overflow: hidden; background: #0f1320; border-radius: 8px;">
+            <div style="height: calc(100% - 80px); overflow: hidden; background: var(--bg); border-radius: 8px;">
                 <iframe id="drawingFrame" style="width: 100%; height: 100%; border: none;"></iframe>
             </div>
         </div>

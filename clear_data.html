@@ -9,8 +9,8 @@
     <style>
         body {
             padding: 40px;
-            background: #0f1320;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -19,8 +19,8 @@
         }
 
         .warning-box {
-            background: rgba(220, 53, 69, 0.1);
-            border: 2px solid #dc3545;
+            background: rgba(207, 48, 48, 0.1);
+            border: 2px solid var(--danger);
             padding: 30px;
             border-radius: 20px;
             max-width: 600px;
@@ -28,20 +28,20 @@
         }
 
         .warning-title {
-            color: #dc3545;
+            color: var(--danger);
             font-size: 24px;
             font-weight: bold;
             margin-bottom: 20px;
         }
 
         .warning-text {
-            color: #ccc;
+            color: var(--text);
             margin-bottom: 30px;
             line-height: 1.6;
         }
 
         .btn-danger {
-            background: #dc3545;
+            background: var(--danger);
             color: white;
             padding: 15px 30px;
             border: none;
@@ -59,7 +59,7 @@
 
         .back-link {
             margin-top: 20px;
-            color: #777;
+            color: var(--muted);
             text-decoration: none;
         }
 
@@ -71,7 +71,7 @@
             padding: 10px;
             border-radius: 8px;
             font-family: monospace;
-            color: #0f0;
+            color: var(--ok);
             display: none;
         }
     </style>

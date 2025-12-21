@@ -10,8 +10,9 @@
     <style>
         /* 主頁面樣式 - 與其他頁面統一 */
         body {
-            background: #0f1320;
+            background: var(--bg);
             min-height: 100vh;
+            color: var(--text);
         }
 
         main {
@@ -28,12 +29,12 @@
         }
 
         .menu-btn {
-            background: #1c2433;
+            background: var(--card);
             padding: 24px 16px;
             border-radius: 18px;
             font-size: 17px;
-            color: #fff;
-            border: none;
+            color: var(--highlight);
+            border: 1px solid var(--border);
             cursor: pointer;
             transition: all 0.2s ease;
             font-weight: 600;
@@ -42,6 +43,7 @@
         .menu-btn:hover {
             background: #242d3f;
             transform: translateY(-2px);
+            border-color: var(--primary);
         }
 
         .menu-btn:active {
@@ -60,16 +62,17 @@
 
         .progress-card {
             flex: 1;
-            background: #1c2433;
+            background: var(--card);
             border-radius: 20px;
             padding: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            border: 1px solid var(--border);
         }
 
         .card-title {
-            color: #aaa;
+            color: var(--muted);
             font-size: 16px;
             margin-bottom: 20px;
         }
@@ -102,11 +105,11 @@
         }
 
         .circle-progress-bar.received {
-            stroke: #3d7bff;
+            stroke: var(--ok);
         }
 
         .circle-progress-bar.lifted {
-            stroke: #28a745;
+            stroke: var(--primary);
         }
 
         .card-footer {
@@ -115,7 +118,7 @@
         }
 
         .footer-title {
-            color: #777;
+            color: var(--muted);
             font-size: 14px;
             margin-bottom: 12px;
         }
@@ -124,7 +127,7 @@
             display: flex;
             justify-content: space-between;
             width: 100%;
-            border-top: 1px solid #2f3340;
+            border-top: 1px solid var(--border);
             padding-top: 12px;
         }
 
@@ -134,13 +137,13 @@
         }
 
         .stat-label {
-            color: #777;
+            color: var(--muted);
             font-size: 12px;
             margin-bottom: 4px;
         }
 
         .stat-value {
-            color: #fff;
+            color: var(--text);
             font-size: 14px;
             font-weight: 600;
         }
@@ -156,8 +159,8 @@
         .memo-input {
             width: 100%;
             height: 100px;
-            background: #1c2433;
-            border: 1px solid #2f3340;
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px;
             color: #fff;
@@ -169,7 +172,7 @@
 
         .memo-input:focus {
             outline: none;
-            border-color: #3d7bff;
+            border-color: var(--primary);
         }
 
         /* 備份區域 */
@@ -182,7 +185,7 @@
 
         .section-title {
             font-size: 18px;
-            color: #fff;
+            color: var(--highlight);
             font-weight: 700;
             margin-bottom: 16px;
         }
@@ -200,7 +203,7 @@
             color: #fff;
             border-radius: 14px;
             font-size: 15px;
-            border: none;
+            border: 1px solid var(--border);
             cursor: pointer;
             transition: all 0.2s ease;
             font-weight: 600;
@@ -208,10 +211,11 @@
 
         .ghost-btn:hover {
             background: #2a3447;
+            border-color: var(--primary);
         }
 
         .danger-btn {
-            background: #ff4b4b;
+            background: var(--danger);
             color: #fff;
             padding: 14px;
             border-radius: 16px;
@@ -223,7 +227,7 @@
         }
 
         .danger-btn:hover {
-            background: #ff3333;
+            background: #c82333;
         }
 
         .danger-btn.full {
@@ -356,19 +360,19 @@
 
         .back-btn {
             padding: 8px 20px;
-            background: #2f3340;
-            color: #fff;
+            background: var(--card);
+            color: var(--text);
             border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
             transition: all 0.2s;
             font-size: 14px;
-            border: 1px solid #3e414b;
+            border: 1px solid var(--border);
         }
 
         .back-btn:hover {
-            background: #3e4452;
+            background: #2a2a2a;
         }
     </style>
 </head>

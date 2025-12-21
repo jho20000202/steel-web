@@ -10,8 +10,8 @@
     <style>
         body {
             padding: 20px;
-            background: #0f1320;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
         }
 
         .header-row {
@@ -24,12 +24,14 @@
         .header-title {
             font-size: 24px;
             font-weight: bold;
+            color: var(--highlight);
         }
 
         .back-btn {
             padding: 10px 20px;
-            background: #2f3340;
-            color: #fff;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
             border-radius: 12px;
             cursor: pointer;
             text-decoration: none;
@@ -37,7 +39,7 @@
         }
 
         .back-btn:hover {
-            background: #3e4452;
+            background: #2a2a2a;
         }
 
         .action-bar {
@@ -51,8 +53,8 @@
         .input-box {
             padding: 10px 16px;
             border-radius: 10px;
-            background: #2a2b31;
-            border: 1px solid #3e414b;
+            background: #252525;
+            border: 1px solid var(--border);
             color: #fff;
             font-size: 15px;
             max-width: 300px;
@@ -60,7 +62,7 @@
 
         .input-box:focus {
             outline: none;
-            border-color: #3d7bff;
+            border-color: var(--primary);
         }
 
         .select-all-btn,
@@ -75,16 +77,17 @@
         }
 
         .select-all-btn {
-            background: #6c757d;
+            background: #555;
             color: #fff;
+            border: 1px solid var(--border);
         }
 
         .select-all-btn:hover {
-            background: #5a6268;
+            background: #666;
         }
 
         .confirm-btn {
-            background: #28a745;
+            background: var(--ok);
             color: #fff;
         }
 
@@ -93,8 +96,9 @@
         }
 
         .confirm-btn:disabled {
-            background: #6c757d;
+            background: #444;
             cursor: not-allowed;
+            color: #888;
         }
 
         .cards-container {
@@ -104,10 +108,10 @@
         }
 
         .card {
-            background: #1c2433;
+            background: var(--card);
             border-radius: 12px;
             padding: 16px 20px;
-            border: 1px solid #2f3340;
+            border: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -115,13 +119,15 @@
         }
 
         .card.selected {
-            border-color: #28a745;
-            background: #1e2d1e;
+            border-color: var(--ok);
+            background: rgba(39, 174, 96, 0.1);
+            /* Subtle Green Tint */
         }
 
         .card.unselected {
-            border-color: #dc3545;
-            background: #2d1e1e;
+            border-color: var(--danger);
+            background: rgba(207, 48, 48, 0.1);
+            /* Subtle Red Tint */
         }
 
         .card.hidden {
@@ -139,17 +145,17 @@
         .card-id {
             font-size: 18px;
             font-weight: bold;
-            color: #3d7bff;
+            color: var(--highlight);
             min-width: 100px;
         }
 
         .card-detail {
             font-size: 15px;
-            color: #fff;
+            color: var(--text);
         }
 
         .card-meta {
-            color: #aaa;
+            color: var(--muted);
             font-size: 14px;
             margin-right: 6px;
         }
@@ -164,11 +170,13 @@
             width: 24px;
             height: 24px;
             cursor: pointer;
+            accent-color: var(--primary);
+            /* Gold Checkbox */
         }
 
         .checkbox-label {
             font-size: 15px;
-            color: #fff;
+            color: var(--text);
             cursor: pointer;
             user-select: none;
         }
@@ -211,7 +219,8 @@
             <h3 style="margin-bottom: 20px;">正在處理中...</h3>
             <div
                 style="width: 100%; background: #3e414b; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px;">
-                <div id="progressBar" style="width: 0%; height: 100%; background: #3d7bff; transition: width 0.3s;">
+                <div id="progressBar"
+                    style="width: 0%; height: 100%; background: var(--primary); transition: width 0.3s;">
                 </div>
             </div>
             <div id="progressText" style="color: #aaa;">0 / 0</div>

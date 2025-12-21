@@ -10,18 +10,18 @@
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #0f1320 0%, #1a2332 100%);
+            background: var(--bg);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            color: #fff;
+            color: var(--text);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
 
         .top-bar {
-            background: #1c2433;
+            background: var(--card);
             padding: 16px 24px;
-            border-bottom: 1px solid #2f3340;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -34,17 +34,18 @@
 
         .back-btn {
             padding: 8px 20px;
-            background: #2f3340;
-            color: #fff;
+            background: var(--card);
+            color: var(--text);
             border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
             transition: all 0.2s;
+            border: 1px solid var(--border);
         }
 
         .back-btn:hover {
-            background: #3e4452;
+            background: #2a2a2a;
         }
 
         .container {
@@ -64,15 +65,14 @@
             font-size: 36px;
             font-weight: 800;
             margin-bottom: 12px;
-            background: linear-gradient(135deg, #3d7bff 0%, #5a9dff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--highlight);
+            background: none;
+            -webkit-text-fill-color: initial;
         }
 
         .page-subtitle {
             font-size: 16px;
-            color: #aaa;
+            color: var(--muted);
         }
 
         .system-grid {
@@ -83,7 +83,7 @@
         }
 
         .system-card {
-            background: #1c2433;
+            background: var(--card);
             border-radius: 20px;
             padding: 32px;
             text-align: center;
@@ -92,6 +92,7 @@
             border: 2px solid transparent;
             position: relative;
             overflow: hidden;
+            border: 1px solid var(--border);
         }
 
         .system-card::before {
@@ -101,7 +102,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, rgba(61, 123, 255, 0.1) 0%, rgba(90, 157, 255, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(195, 164, 14, 0.1) 0%, rgba(233, 211, 84, 0.05) 100%);
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -112,8 +113,8 @@
 
         .system-card:hover {
             transform: translateY(-6px);
-            border-color: #3d7bff;
-            box-shadow: 0 15px 30px rgba(61, 123, 255, 0.2);
+            border-color: var(--primary);
+            box-shadow: 0 15px 30px rgba(195, 164, 14, 0.15);
         }
 
         .system-card.active {
@@ -123,6 +124,7 @@
         .system-card.coming-soon {
             cursor: not-allowed;
             opacity: 0.6;
+            border-color: #444;
         }
 
         .system-card.coming-soon:hover {
@@ -137,11 +139,12 @@
             margin-bottom: 12px;
             position: relative;
             z-index: 1;
+            color: var(--highlight);
         }
 
         .system-desc {
             font-size: 14px;
-            color: #aaa;
+            color: var(--muted);
             margin-bottom: 16px;
             position: relative;
             z-index: 1;
@@ -158,33 +161,21 @@
         }
 
         .status-active {
-            background: rgba(61, 123, 255, 0.2);
-            color: #3d7bff;
+            background: rgba(195, 164, 14, 0.2);
+            color: var(--primary);
+            border: 1px solid var(--primary);
         }
 
         .status-coming {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
+            background: rgba(100, 100, 100, 0.2);
+            color: var(--muted);
+            border: 1px solid #444;
         }
 
-        /* 響應式設計 */
-        @media (max-width: 768px) {
-            .page-title {
-                font-size: 28px;
-            }
-
-            .system-grid {
-                grid-template-columns: 1fr;
-                gap: 16px;
-            }
-
-            .system-card {
-                padding: 24px;
-            }
-
-            .system-name {
-                font-size: 20px;
-            }
+        .status-in-progress {
+            background: rgba(233, 211, 84, 0.2);
+            color: var(--highlight);
+            border: 1px solid var(--highlight);
         }
     </style>
 </head>
@@ -244,7 +235,7 @@
         document.querySelectorAll('.coming-soon').forEach(card => {
             card.addEventListener('click', (e) => {
                 e.preventDefault();
-                alert('！');
+                alert('即將推出！');
             });
         });
     </script>

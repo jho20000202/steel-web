@@ -10,8 +10,8 @@
     <style>
         body {
             padding: 20px;
-            background: #0f1320;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
         }
 
         .header-row {
@@ -24,12 +24,14 @@
         .header-title {
             font-size: 24px;
             font-weight: bold;
+            color: var(--highlight);
         }
 
         .back-btn {
             padding: 10px 20px;
-            background: #2f3340;
-            color: #fff;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
             border-radius: 12px;
             cursor: pointer;
             text-decoration: none;
@@ -37,14 +39,15 @@
         }
 
         .back-btn:hover {
-            background: #3e4452;
+            background: #2a2a2a;
         }
 
         .form-section {
-            background: #1c2433;
+            background: var(--card);
             padding: 20px;
             border-radius: 16px;
             margin-bottom: 24px;
+            border: 1px solid var(--border);
         }
 
         .form-grid {
@@ -62,15 +65,15 @@
 
         .input-group label {
             font-size: 13px;
-            color: #aaa;
+            color: var(--muted);
         }
 
         .input-box,
         select {
             padding: 12px;
             border-radius: 10px;
-            background: #2a2b31;
-            border: 1px solid #3e414b;
+            background: #252525;
+            border: 1px solid var(--border);
             color: #fff;
             font-size: 15px;
         }
@@ -78,15 +81,15 @@
         .input-box:focus,
         select:focus {
             outline: none;
-            border-color: #3d7bff;
+            border-color: var(--primary);
         }
 
         .primary-btn {
             width: 100%;
             padding: 14px;
-            background: #3d7bff;
+            background: var(--primary);
             border-radius: 12px;
-            color: #fff;
+            color: #000;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -95,7 +98,7 @@
         }
 
         .primary-btn:hover {
-            background: #2a65e6;
+            background: #d4b520;
         }
 
         .cards-container {
@@ -105,10 +108,10 @@
         }
 
         .card {
-            background: #1c2433;
+            background: var(--card);
             border-radius: 12px;
             padding: 16px;
-            border: 1px solid #2f3340;
+            border: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -117,7 +120,7 @@
         .card-id {
             font-size: 18px;
             font-weight: bold;
-            color: #3d7bff;
+            color: var(--highlight);
         }
 
         .card-detail {
@@ -127,7 +130,7 @@
         }
 
         .card-meta {
-            color: #777;
+            color: var(--muted);
         }
 
         .card-actions {
@@ -138,7 +141,7 @@
 
         .btn-confirm {
             padding: 10px 20px;
-            background: #28a745;
+            background: var(--ok);
             color: #fff;
             border: none;
             border-radius: 8px;
@@ -153,7 +156,7 @@
 
         .btn-delete {
             padding: 10px 20px;
-            background: #dc3545;
+            background: var(--danger);
             color: #fff;
             border: none;
             border-radius: 8px;
@@ -181,12 +184,12 @@
         }
 
         .modal {
-            background: #1c2433;
+            background: var(--card);
             padding: 24px;
             border-radius: 16px;
             width: 90%;
             max-width: 400px;
-            border: 1px solid #2f3340;
+            border: 1px solid var(--border);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
         }
 
@@ -194,7 +197,7 @@
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 16px;
-            color: #fff;
+            color: var(--highlight);
         }
 
         .modal-content {
@@ -212,21 +215,21 @@
 
         .btn-cancel {
             padding: 10px 20px;
-            background: #2f3340;
+            background: #333;
             color: #fff;
-            border: none;
+            border: 1px solid var(--border);
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
         }
 
         .btn-cancel:hover {
-            background: #3e4452;
+            background: #444;
         }
 
         .btn-confirm-action {
             padding: 10px 20px;
-            background: #dc3545;
+            background: var(--danger);
             color: #fff;
             border: none;
             border-radius: 8px;
