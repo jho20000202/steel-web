@@ -418,7 +418,8 @@
 
         async function loadItems() {
             if (!db) return;
-            const { data, error } = await db.from('components').select('*').order('created_at', { ascending: false });
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
+            const { data, error } = await db.from('components').select('*').eq('site_name', currentSite).order('created_at', { ascending: false });
             if (error) { console.error('Error loading items:', error); return; }
             allItems = data || [];
             filteredItems = allItems;
@@ -494,13 +495,15 @@
         async function addItem() {
             const id = document.getElementById('newId').value.trim();
             if (!id) { alert('請輸入構件編號'); return; }
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
             const newItem = {
                 item_id: id,
                 spec: document.getElementById('newSpec').value.trim(),
                 material: document.getElementById('newMaterial').value.trim(),
                 weight: Number(document.getElementById('newWeight').value.trim()) || 0,
                 position: document.getElementById('newPos').value.trim(),
-                qty: Number(document.getElementById('newQty').value.trim()) || 0
+                qty: Number(document.getElementById('newQty').value.trim()) || 0,
+                site_name: currentSite
             };
             const { error } = await db.from('components').insert([newItem]);
             if (error) { alert('新增失敗：' + error.message); }
@@ -572,8 +575,9 @@
                     }
 
                     let successCount = 0, failCount = 0, lastError = "";
+                    const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
                     for (let i = 0; i < mappedData.length; i += 100) {
-                        const batch = mappedData.slice(i, i + 100);
+                        const batch = mappedData.slice(i, i + 100).map(item => ({ ...item, site_name: currentSite }));
                         const { error } = await db.from('components').insert(batch);
                         if (error) {
                             console.error('Batch insert error:', error);

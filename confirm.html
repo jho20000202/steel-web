@@ -241,8 +241,10 @@
         const STORAGE_KEY = 'steel_confirm_selection';
 
         async function loadConfirmItems() {
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
             const { data, error } = await db.from('confirm')
                 .select('*')
+                .eq('site_name', currentSite)
                 .is('lifted_at', null)
                 .order('confirmed_date', { ascending: true });
 
@@ -394,9 +396,11 @@
                     const chunkIds = chunk.map(item => item.id);
 
                     // 1. Batch Update 'confirm' table
+                    const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
                     const { error: updateError } = await db.from('confirm')
                         .update({ lifted_at: currentTime })
-                        .in('id', chunkIds);
+                        .in('id', chunkIds)
+                        .eq('site_name', currentSite);
 
                     if (updateError) {
                         console.error('Batch update error:', updateError);
@@ -409,7 +413,8 @@
                             planned_date: item.planned_date,
                             confirmed_date: item.confirmed_date,
                             lifted_date: currentDay,
-                            qty: item.qty
+                            qty: item.qty,
+                            site_name: currentSite
                         }));
 
                         const { error: insertError } = await db.from('finished')

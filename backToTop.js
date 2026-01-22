@@ -12,27 +12,11 @@
         const backTopBtn = document.createElement('div');
         backTopBtn.id = 'backTopBtn';
 
-        // 逐個設置樣式屬性，使用 setProperty 和 'important' 優先級
-        backTopBtn.style.setProperty('position', 'fixed', 'important');
-        backTopBtn.style.setProperty('right', '20px', 'important');
-        backTopBtn.style.setProperty('bottom', '30px', 'important');
-        backTopBtn.style.setProperty('width', '50px');
-        backTopBtn.style.setProperty('height', '50px');
-        backTopBtn.style.setProperty('border-radius', '50%');
-        backTopBtn.style.setProperty('background', 'rgba(61, 123, 255, 0.8)');
-        backTopBtn.style.setProperty('backdrop-filter', 'blur(6px)');
-        backTopBtn.style.setProperty('display', 'flex');
-        backTopBtn.style.setProperty('justify-content', 'center');
-        backTopBtn.style.setProperty('align-items', 'center');
-        backTopBtn.style.setProperty('cursor', 'pointer');
-        backTopBtn.style.setProperty('z-index', '9999');
-        backTopBtn.style.setProperty('opacity', '0');
-        backTopBtn.style.setProperty('pointer-events', 'none');
-        backTopBtn.style.setProperty('transition', 'all 0.3s ease');
-        backTopBtn.style.setProperty('box-shadow', '0 4px 12px rgba(0,0,0,0.3)');
+        // 僅保留必要的 JS 行為控制，樣式由 CSS 處理
+        // 移除所有 inline style，除了 JS 邏輯控制的 opacity/pointer-events (在下面 scroll 事件處理)
 
         backTopBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: #fff;">
+            <svg viewBox="0 0 24 24">
                 <path d="M12 4l-8 8h5v8h6v-8h5z"></path>
             </svg>
         `;
@@ -58,16 +42,11 @@
             }
         });
 
-        // 懸停效果
-        backTopBtn.addEventListener('mouseenter', () => {
-            backTopBtn.style.setProperty('background', 'rgba(61, 123, 255, 1)');
-            backTopBtn.style.setProperty('transform', 'translateY(-2px)');
-        });
-
-        backTopBtn.addEventListener('mouseleave', () => {
-            backTopBtn.style.setProperty('background', 'rgba(61, 123, 255, 0.8)');
-            backTopBtn.style.setProperty('transform', 'translateY(0)');
-        });
+        // 懸停效果由 CSS 處理
+        /* 
+        backTopBtn.addEventListener('mouseenter', () => { ... });
+        backTopBtn.addEventListener('mouseleave', () => { ... });
+        */
 
         // 點擊事件監聽
         backTopBtn.addEventListener('click', scrollToTop);

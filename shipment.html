@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>裝車資訊 - 皆豪加工廠管理系統</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="html5-qrcode.min.js"></script>
+    <style>
+        /* Scanner Styles */
+        .scanner-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .close-scanner {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 90%;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            background: rgba(195, 164, 14, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+            text-shadow: none;
+            letter-spacing: 1px;
+        }
+
+        .header-back-btn {
+            background: transparent;
+            border: 1px solid #666;
+            color: var(--text);
+            padding: 8px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .header-back-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Adjusting existing back-btn styles if necessary or removing them */
+        .back-btn {
+            display: none;
+        }
+
+        /* Hiding old button style */
+
+
+        .form-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 16px;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Dynamic Rows Styles */
+        .component-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .btn-icon {
+            background: rgba(195, 164, 14, 0.2);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .btn-icon:hover {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .btn-icon.remove {
+            border-color: #d32f2f;
+            color: #ff5252;
+            background: rgba(211, 47, 47, 0.1);
+        }
+
+        .btn-icon.remove:hover {
+            background: #d32f2f;
+            color: #fff;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--highlight));
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(195, 164, 14, 0.3);
+        }
+
+        /* Result Card Styles */
+        .result-view {
+            display: none;
+            text-align: center;
+        }
+
+        .shipment-card {
+            background: var(--card);
+            border: 2px solid var(--primary);
+            border-radius: 24px;
+            padding: 60px 40px;
+            margin-top: 40px;
+            box-shadow: 0 0 50px rgba(195, 164, 14, 0.1);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-label {
+            font-size: 18px;
+            color: var(--muted);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .card-value {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--highlight);
+            margin-bottom: 40px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            line-height: 1.2;
+        }
+
+        .card-value:last-child {
+            margin-bottom: 0;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 30px 0;
+            width: 50%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-reset {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 10px 24px;
+            border-radius: 30px;
+            margin-top: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-reset:hover {
+            border-color: var(--text);
+            color: var(--text);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Scanner Modal -->
+    <div id="scannerModal" class="scanner-modal">
+        <div id="reader"></div>
+        <button onclick="stopScanner()" class="close-scanner">關閉掃描</button>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">裝車資訊登錄</h1>
+            <a href="factory_management.html" class="header-back-btn">返回上一頁</a>
+        </div>
+
+        <!-- Input Form -->
+        <div id="inputForm" class="form-card">
+            <div class="form-group">
+                <label class="form-label">送往工地</label>
+                <select id="destination" class="form-control">
+                    <option value="" disabled selected>請選擇...</option>
+                    <option value="南亞5A">南亞5A</option>
+                    <option value="台中七期">台中七期</option>
+                    <option value="高雄港">高雄港</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">構件資訊</label>
+                <div id="componentContainer">
+                    <div class="component-row">
+                        <input type="text" name="componentId[]" class="form-control" placeholder="構件編號">
+                        <input type="text" name="componentPos[]" class="form-control" placeholder="構件位置">
+                        <button type="button" onclick="startScanner(this)" class="btn-icon" title="掃描QR Code">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <path d="M3 14h7v7H3z"></path>
+                            </svg>
+                        </button>
+                        <button type="button" onclick="addComponentRow()" class="btn-icon" title="新增構件">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">車頭編號</label>
+                    <input type="text" id="truckHead" class="form-control" placeholder="例如: KLA-1234">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">尾車編號</label>
+                    <input type="text" id="truckTail" class="form-control" placeholder="例如: 55-AB">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label class="form-label">司機姓名</label>
+                    <input type="text" id="driverName" class="form-control" placeholder="輸入姓名">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">司機電話</label>
+                    <input type="tel" id="driverPhone" class="form-control" placeholder="輸入電話">
+                </div>
+            </div>
+
+            <button onclick="submitShipment()" class="btn-submit">確認發車</button>
+        </div>
+
+        <!-- Result View -->
+        <div id="resultView" class="result-view">
+            <div class="shipment-card">
+                <div class="card-label">送往工地</div>
+                <div id="displayDestination" class="card-value">-</div>
+
+                <div class="divider"></div>
+
+                <div class="card-label">車頭編號</div>
+                <div id="displayTruckHead" class="card-value">-</div>
+            </div>
+
+            <button onclick="resetForm()" class="btn-reset">登錄下一車</button>
+        </div>
+
+    </div>
+
+    <script>
+        let html5QrcodeScanner = null;
+        let currentScanRow = null;
+
+        function startScanner(btn) {
+            currentScanRow = btn.parentElement;
+            document.getElementById('scannerModal').style.display = 'flex';
+
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess);
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // Assume format "ID,POS" or just "ID"
+            // Example: "C1-5,3F" -> ID=C1-5, Pos=3F
+            let parts = decodedText.split(',');
+            let id = parts[0].trim();
+            let pos = parts.length > 1 ? parts[1].trim() : '';
+
+            // Fill inputs in the current row
+            currentScanRow.querySelector('input[name="componentId[]"]').value = id;
+            if (pos) currentScanRow.querySelector('input[name="componentPos[]"]').value = pos;
+
+            stopScanner();
+            alert(`掃描成功：${id} ${pos}`);
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('scannerModal').style.display = 'none';
+                    html5QrcodeScanner.clear();
+                }).catch(err => {
+                    console.error("Failed to stop scanner", err);
+                    document.getElementById('scannerModal').style.display = 'none';
+                });
+            } else {
+                document.getElementById('scannerModal').style.display = 'none';
+            }
+        }
+
+        function addComponentRow() {
+            const container = document.getElementById('componentContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'component-row';
+            newRow.innerHTML = `
+                <input type="text" name="componentId[]" class="form-control" placeholder="構件編號">
+                <input type="text" name="componentPos[]" class="form-control" placeholder="構件位置">
+                <button type="button" onclick="startScanner(this)" class="btn-icon" title="掃描QR Code">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <path d="M3 14h7v7H3z"></path>
+                    </svg>
+                </button>
+                <button type="button" onclick="removeRow(this)" class="btn-icon remove" title="移除">×</button>
+            `;
+            container.appendChild(newRow);
+        }
+
+        function removeRow(btn) {
+            btn.parentElement.remove();
+        }
+
+        function submitShipment() {
+            const dest = document.getElementById('destination').value;
+            const truckHead = document.getElementById('truckHead').value;
+
+            // Validate basic info
+            if (!dest || !truckHead) {
+                alert('請填寫「送往工地」和「車頭編號」！');
+                return;
+            }
+
+            // Check if at least one component is filled (optional validation)
+            const componentIds = document.getElementsByName('componentId[]');
+            let hasComponent = false;
+            for (let input of componentIds) {
+                if (input.value.trim() !== '') {
+                    hasComponent = true;
+                    break;
+                }
+            }
+
+            // NOTE: We are just displaying the summary card as requested.
+            // The component data is ready for collection in the componentId[] and componentPos[] arrays.
+
+            // Set display values
+            document.getElementById('displayDestination').textContent = dest;
+            document.getElementById('displayTruckHead').textContent = truckHead;
+
+            // Switch views
+            document.getElementById('inputForm').style.display = 'none';
+            document.getElementById('resultView').style.display = 'block';
+            document.querySelector('.page-title').textContent = '已完成裝車資訊';
+        }
+
+        function resetForm() {
+            // Reset fields
+            document.getElementById('destination').selectedIndex = 0;
+            document.getElementById('truckHead').value = '';
+            document.getElementById('truckTail').value = '';
+            document.getElementById('driverName').value = '';
+            document.getElementById('driverPhone').value = '';
+
+            // Reset components to single row
+            const container = document.getElementById('componentContainer');
+            container.innerHTML = `
+                <div class="component-row">
+                    <input type="text" name="componentId[]" class="form-control" placeholder="構件編號">
+                    <input type="text" name="componentPos[]" class="form-control" placeholder="構件位置">
+                        <button type="button" onclick="startScanner(this)" class="btn-icon" title="掃描QR Code">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <path d="M3 14h7v7H3z"></path>
+                            </svg>
+                        </button>
+                    <button type="button" onclick="addComponentRow()" class="btn-icon" title="新增構件">+</button>
+                </div>
+            `;
+
+            // Switch views
+            document.getElementById('inputForm').style.display = 'block';
+            document.getElementById('resultView').style.display = 'none';
+            document.querySelector('.page-title').textContent = '裝車資訊登錄';
+        }
+    </script>
+    <script src="backToTop.js"></script>
+</body>
+
+</html>

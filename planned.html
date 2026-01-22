@@ -240,6 +240,39 @@
         .btn-confirm-action:hover {
             background: #c82333;
         }
+
+        /* Autocomplete Styles */
+        .autocomplete-items {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 99;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .autocomplete-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #333;
+            color: #ddd;
+            font-size: 15px;
+        }
+
+        .autocomplete-item:hover {
+            background: rgba(195, 164, 14, 0.1);
+            color: var(--primary);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 
@@ -251,9 +284,10 @@
     <div class="form-section">
         <div style="margin-bottom:16px; font-size:16px; font-weight:600;">新增預計進料</div>
         <div class="form-grid">
-            <div class="input-group">
+            <div class="input-group" style="position: relative;">
                 <label>構件編號</label>
-                <input id="itemId" class="input-box" placeholder="輸入構件編號" onchange="loadPositions()">
+                <input id="itemId" class="input-box" placeholder="輸入關鍵字搜尋..." autocomplete="off">
+                <div id="autocomplete-list" class="autocomplete-items"></div>
             </div>
             <div class="input-group">
                 <label>構件位置</label>
@@ -416,15 +450,18 @@
 
         async function loadAllData() {
             if (!db) return;
-            const { data: components, error: compError } = await db.from('components').select('*');
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
+            const { data: components, error: compError } = await db.from('components').select('*').eq('site_name', currentSite);
             if (compError) { console.error('Error loading components:', compError); return; }
             allComponents = components || [];
             await loadPlannedItems();
         }
 
         async function loadPlannedItems() {
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
             const { data, error } = await db.from('planned')
                 .select('*')
+                .eq('site_name', currentSite)
                 .is('received_at', null)
                 .order('created_at', { ascending: true }); // Sort by creation time (registration order)
             if (error) { console.error('Error loading planned items:', error); return; }
@@ -498,11 +535,13 @@
                 return;
             }
 
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
             const { error } = await db.from('planned').upsert([{
                 item_id: itemId,
                 position: position,
                 planned_date: plannedDate,
-                qty: qty
+                qty: qty,
+                site_name: currentSite
             }], {
                 onConflict: 'item_id,position'
             });
@@ -539,6 +578,49 @@
             } else {
                 document.getElementById('plannedDate').valueAsDate = new Date();
             }
+
+            // Autocomplete Setup
+            const input = document.getElementById("itemId");
+            const list = document.getElementById("autocomplete-list");
+
+            input.addEventListener("input", function (e) {
+                const val = this.value;
+                list.innerHTML = '';
+                if (!val) return;
+
+                // Get unique item_ids from allComponents
+                const uniqueIds = [...new Set(allComponents.map(c => c.item_id))];
+
+                // Filter matching IDs (limit to 10 to avoid performance lag)
+                const matches = uniqueIds.filter(id => id.toUpperCase().includes(val.toUpperCase())).slice(0, 10);
+
+                if (matches.length === 0) {
+                    // Optionally show "No results"
+                    return;
+                }
+
+                matches.forEach(id => {
+                    const item = document.createElement("div");
+                    item.className = "autocomplete-item";
+                    // Highlight match
+                    const regex = new RegExp(`(${val})`, "gi");
+                    item.innerHTML = id.replace(regex, '<span style="color:var(--primary); font-weight:bold;">$1</span>');
+
+                    item.addEventListener("click", function () {
+                        input.value = id; // Set full ID
+                        list.innerHTML = '';
+                        loadPositions(); // Trigger dependent logic
+                    });
+                    list.appendChild(item);
+                });
+            });
+
+            // Close list when clicking outside
+            document.addEventListener("click", function (e) {
+                if (e.target !== input) {
+                    list.innerHTML = '';
+                }
+            });
         });
     </script>
     <script src="backToTop.js"></script>

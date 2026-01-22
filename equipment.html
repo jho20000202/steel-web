@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>機具管理 - 皆豪工程管理系統</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--highlight);
+            margin: 0;
+        }
+
+        .back-btn {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #2a2a2a;
+        }
+
+        .add-btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .add-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: var(--highlight);
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #fff;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .cancel-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .save-btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Card Grid */
+        .equipment-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .tool-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .tool-type {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .tool-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--highlight);
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-use {
+            background: rgba(39, 174, 96, 0.2);
+            color: var(--ok);
+            border: 1px solid var(--ok);
+        }
+
+        .status-lent {
+            background: rgba(233, 211, 84, 0.2);
+            color: var(--highlight);
+            border: 1px solid var(--highlight);
+        }
+
+        .status-malfunction {
+            background: rgba(207, 48, 48, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .status-maintenance {
+            background: rgba(154, 160, 166, 0.2);
+            color: var(--muted);
+            border: 1px solid var(--muted);
+        }
+
+        .info-row {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            color: var(--muted);
+            margin-right: 8px;
+        }
+
+        .card-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            border-top: 1px solid #333;
+            padding-top: 15px;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .edit-btn {
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .edit-btn:hover {
+            background: rgba(195, 164, 14, 0.1);
+        }
+
+        .delete-btn {
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .delete-btn:hover {
+            background: rgba(207, 48, 48, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--muted);
+            padding: 40px;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div>
+                <h1 class="page-title">機具管理</h1>
+                <p style="color: var(--muted); margin-top: 5px;">Equipment Management</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="index.html" class="back-btn">返回首頁</a>
+                <button class="add-btn" onclick="openModal()">+ 新增機具</button>
+            </div>
+        </div>
+
+        <div id="equipmentGrid" class="equipment-grid">
+            <!-- Content will be populated by JS -->
+        </div>
+    </div>
+
+    <!-- Edit/Add Modal -->
+    <div id="toolModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle" class="modal-title">新增機具</h2>
+            <form id="toolForm" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="toolId">
+
+                <div class="form-group">
+                    <label class="form-label">機具類型</label>
+                    <input type="text" id="toolType" class="form-input" placeholder="例如：電鑽、切割機..." required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">機具編號</label>
+                    <input type="text" id="toolNumber" class="form-input" placeholder="例如：EQ-2025-001" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">目前位置</label>
+                    <input type="text" id="toolLocation" class="form-input" placeholder="例如：A區倉庫" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">機具負責人</label>
+                    <input type="text" id="toolOwner" class="form-input" placeholder="例如：王小明" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">機具狀態</label>
+                    <select id="toolStatus" class="form-input">
+                        <option value="use">使用中</option>
+                        <option value="lent">借出中</option>
+                        <option value="malfunction">故障中</option>
+                        <option value="maintenance">維修中</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" onclick="closeModal()">取消</button>
+                    <button type="submit" class="save-btn">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script>
+        // Use local storage for demo if no DB connection, or extend to use Supabase later
+        // For now, implementing with LocalStorage to ensure immediate functionality as requested
+        // "First set up a page... then input... display as cards"
+
+        let equipmentList = JSON.parse(localStorage.getItem('equipmentList')) || [];
+
+        function renderGrid() {
+            const grid = document.getElementById('equipmentGrid');
+            grid.innerHTML = '';
+
+            if (equipmentList.length === 0) {
+                grid.innerHTML = '<div class="empty-state">目前沒有機具資料，請點選上方按鈕新增。</div>';
+                return;
+            }
+
+            equipmentList.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'tool-card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div>
+                            <div class="tool-type">${escapeHtml(item.type)}</div>
+                            <div class="tool-name">${escapeHtml(item.number)}</div>
+                        </div>
+                        ${getStatusBadge(item.status)}
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">位置:</span> ${escapeHtml(item.location)}
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">負責人:</span> ${escapeHtml(item.owner)}
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-btn edit-btn" onclick="editTool('${item.id}')">編輯</button>
+                        <button class="action-btn delete-btn" onclick="deleteTool('${item.id}')">刪除</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function getStatusBadge(status) {
+            const map = {
+                'use': { text: '使用中', class: 'status-use' },
+                'lent': { text: '借出中', class: 'status-lent' },
+                'malfunction': { text: '故障中', class: 'status-malfunction' },
+                'maintenance': { text: '維修中', class: 'status-maintenance' }
+            };
+            const config = map[status] || map['use'];
+            return `<span class="status-badge ${config.class}">${config.text}</span>`;
+        }
+
+        function openModal(id = null) {
+            const modal = document.getElementById('toolModal');
+            const title = document.getElementById('modalTitle');
+            const form = document.getElementById('toolForm');
+
+            if (id) {
+                const item = equipmentList.find(i => i.id === id);
+                if (item) {
+                    title.textContent = '編輯機具';
+                    document.getElementById('toolId').value = item.id;
+                    document.getElementById('toolType').value = item.type;
+                    document.getElementById('toolNumber').value = item.number;
+                    document.getElementById('toolLocation').value = item.location;
+                    document.getElementById('toolOwner').value = item.owner;
+                    document.getElementById('toolStatus').value = item.status;
+                }
+            } else {
+                title.textContent = '新增機具';
+                form.reset();
+                document.getElementById('toolId').value = '';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('toolModal').classList.remove('active');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('toolId').value;
+            const newItem = {
+                id: id || Date.now().toString(),
+                type: document.getElementById('toolType').value,
+                number: document.getElementById('toolNumber').value,
+                location: document.getElementById('toolLocation').value,
+                owner: document.getElementById('toolOwner').value,
+                status: document.getElementById('toolStatus').value,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (id) {
+                const index = equipmentList.findIndex(i => i.id === id);
+                if (index !== -1) {
+                    equipmentList[index] = newItem;
+                }
+            } else {
+                equipmentList.unshift(newItem); // Add to top
+            }
+
+            saveAndRender();
+            closeModal();
+        }
+
+        function editTool(id) {
+            openModal(id);
+        }
+
+        function deleteTool(id) {
+            if (confirm('確定要刪除此機具嗎？')) {
+                equipmentList = equipmentList.filter(item => item.id !== id);
+                saveAndRender();
+            }
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('equipmentList', JSON.stringify(equipmentList));
+            renderGrid();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('toolModal').addEventListener('click', (e) => {
+            if (e.target.id === 'toolModal') {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        renderGrid();
+    </script>
+</body>
+
+</html>

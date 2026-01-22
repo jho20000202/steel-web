@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選擇工地 - 皆豪工程管理系統</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 90%;
+            margin: 0 auto;
+            flex: 1;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--highlight);
+            margin-bottom: 10px;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #2a2a2a;
+        }
+
+        .site-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .site-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .site-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .site-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--highlight);
+            margin-bottom: 10px;
+        }
+
+        .site-location {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            background: rgba(195, 164, 14, 0.2);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <a href="index.html" class="back-btn">← 返回首頁</a>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">請選擇工地</h1>
+        </div>
+
+        <div class="site-grid">
+            <!-- 南亞5A -->
+            <div class="site-card" onclick="selectSite('南亞5A')">
+                <div class="site-name">南亞5A</div>
+                <span class="status-badge">● 進行中</span>
+            </div>
+
+            <!-- 高鐵娛樂城 -->
+            <div class="site-card" onclick="selectSite('高鐵娛樂城')">
+                <div class="site-name">高鐵娛樂城</div>
+                <span class="status-badge">● 進行中</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectSite(siteName) {
+            // Get the 'redirect' parameter from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectUrl = urlParams.get('redirect');
+
+            // Store selected site (optional, but good practice)
+            localStorage.setItem('selectedSite', siteName);
+
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else {
+                // Default fallback if no redirect is specified
+                alert('未指定跳轉頁面');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -41,7 +41,7 @@
         }
 
         .menu-btn:hover {
-            background: #242d3f;
+            background: rgba(195, 164, 14, 0.1);
             transform: translateY(-2px);
             border-color: var(--primary);
         }
@@ -93,7 +93,7 @@
 
         .circle-bg {
             fill: none;
-            stroke: #2a303c;
+            stroke: #333;
             stroke-width: 12;
         }
 
@@ -150,16 +150,17 @@
 
         /* 備忘欄 */
         .memo-section {
-            background: #141821;
+            background: var(--card);
             margin: 16px;
             padding: 20px;
             border-radius: 20px;
+            border: 1px solid var(--border);
         }
 
         .memo-input {
             width: 100%;
             height: 100px;
-            background: var(--card);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px;
@@ -177,10 +178,11 @@
 
         /* 備份區域 */
         .backup-section {
-            background: #141821;
+            background: var(--card);
             margin: 16px;
             padding: 20px;
             border-radius: 20px;
+            border: 1px solid var(--border);
         }
 
         .section-title {
@@ -199,7 +201,7 @@
         .ghost-btn {
             flex: 1;
             padding: 14px 18px;
-            background: #1e2737;
+            background: transparent;
             color: #fff;
             border-radius: 14px;
             font-size: 15px;
@@ -210,7 +212,7 @@
         }
 
         .ghost-btn:hover {
-            background: #2a3447;
+            background: rgba(195, 164, 14, 0.1);
             border-color: var(--primary);
         }
 
@@ -338,7 +340,7 @@
             }
 
             .stat-item {
-                border-top: 1px solid #2f3340;
+                border-top: 1px solid var(--border);
                 padding-top: 8px;
             }
 
@@ -381,7 +383,11 @@
 
     <!-- 頂部標題 -->
     <header class="top-bar">
-        <div class="top-bar-title">鋼構進出料記錄系統</div>
+        <div class="top-bar-title">
+            鋼構進出料記錄系統
+            <span id="siteBadge"
+                style="display: inline-block; margin-left: 12px; padding: 4px 12px; background: rgba(195, 164, 14, 0.2); border: 1px solid var(--primary); border-radius: 8px; font-size: 14px; color: var(--primary); font-weight: 600;"></span>
+        </div>
         <a href="index.html" class="back-btn">返回上一頁</a>
     </header>
 
@@ -491,14 +497,16 @@
             if (!db) return;
 
             try {
-                // Fetch all data with necessary fields
-                const { data: components, error: compError } = await db.from("components").select("item_id, position, weight, qty");
+                const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
+
+                // Fetch all data with necessary fields, filtered by site
+                const { data: components, error: compError } = await db.from("components").select("item_id, position, weight, qty").eq('site_name', currentSite);
                 if (compError) throw compError;
 
-                const { data: confirmed, error: confError } = await db.from("confirm").select("item_id, position, qty");
+                const { data: confirmed, error: confError } = await db.from("confirm").select("item_id, position, qty").eq('site_name', currentSite);
                 if (confError) throw confError;
 
-                const { data: finished, error: finError } = await db.from("finished").select("item_id, position, qty");
+                const { data: finished, error: finError } = await db.from("finished").select("item_id, position, qty").eq('site_name', currentSite);
                 if (finError) throw finError;
 
                 // Create a map of "item_id|position" to component details
@@ -586,6 +594,15 @@
         function saveMemo(e) {
             localStorage.setItem('dashboard_memo', e.target.value);
         }
+
+        // Display selected site in header badge
+        window.addEventListener('DOMContentLoaded', () => {
+            const selectedSite = localStorage.getItem('selectedSite') || '南亞5A';
+            const siteBadge = document.getElementById('siteBadge');
+            if (siteBadge) {
+                siteBadge.textContent = selectedSite;
+            }
+        });
     </script>
 
     <script src="backToTop.js"></script>

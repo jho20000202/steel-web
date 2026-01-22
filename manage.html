@@ -352,11 +352,12 @@
         async function loadData() {
             if (!db) return;
             document.getElementById("componentList").innerHTML = '<div style="text-align:center; padding:20px;">載入中...</div>';
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
             const [componentsRes, plannedRes, confirmedRes, finishedRes] = await Promise.all([
-                db.from("components").select("*"),
-                db.from("planned").select("*"),
-                db.from("confirm").select("*"),
-                db.from("finished").select("*")
+                db.from("components").select("*").eq('site_name', currentSite),
+                db.from("planned").select("*").eq('site_name', currentSite),
+                db.from("confirm").select("*").eq('site_name', currentSite),
+                db.from("finished").select("*").eq('site_name', currentSite)
             ]);
             allComponents = componentsRes.data || [];
             plannedItems = plannedRes.data || [];
