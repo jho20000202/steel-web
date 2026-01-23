@@ -452,36 +452,9 @@
         async function loadAllData() {
             if (!db) return;
             const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
-
-            // Fetch all components using pagination (Supabase limit is 5000 per request)
-            let allComponentsData = [];
-            let from = 0;
-            const pageSize = 5000;
-            let hasMore = true;
-
-            while (hasMore) {
-                const { data: componentsPage, error: compError } = await db
-                    .from('components')
-                    .select('*')
-                    .eq('site_name', currentSite)
-                    .range(from, from + pageSize - 1);
-
-                if (compError) {
-                    console.error('Error loading components:', compError);
-                    return;
-                }
-
-                if (componentsPage && componentsPage.length > 0) {
-                    allComponentsData = allComponentsData.concat(componentsPage);
-                    from += pageSize;
-                    hasMore = componentsPage.length === pageSize;
-                } else {
-                    hasMore = false;
-                }
-            }
-
-            console.log(`Loaded ${allComponentsData.length} components for ${currentSite} in planned.html`);
-            allComponents = allComponentsData || [];
+            const { data: components, error: compError } = await db.from('components').select('*').eq('site_name', currentSite).range(0, 99999);
+            if (compError) { console.error('Error loading components:', compError); return; }
+            allComponents = components || [];
             await loadPlannedItems();
         }
 
@@ -762,7 +735,7 @@
                     item.addEventListener("click", async function () {
                         input.value = id; // Set full ID
                         list.innerHTML = '';
-                        await loadPositions(); // Load available positions
+                        await updateAvailableCount(id); // Show available positions
                     });
                     list.appendChild(item);
                 });

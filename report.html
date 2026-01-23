@@ -263,7 +263,8 @@
 
             try {
                 // Fetch components library for weight lookup
-                const { data: components, error } = await db.from('components').select('item_id, position, weight');
+                const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
+                const { data: components, error } = await db.from('components').select('item_id, position, weight').eq('site_name', currentSite).range(0, 99999);
                 if (error) throw error;
                 const weightMap = new Map(components.map(c => [`${c.item_id}|${c.position}`, c.weight]));
 
@@ -293,11 +294,12 @@
         }
 
         async function fetchAllComponentsData(weightMap) {
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
             const [compRes, planRes, confRes, finRes] = await Promise.all([
-                db.from('components').select('*'),
-                db.from('planned').select('*'),
-                db.from('confirm').select('*'),
-                db.from('finished').select('*')
+                db.from('components').select('*').eq('site_name', currentSite).range(0, 99999),
+                db.from('planned').select('*').eq('site_name', currentSite).range(0, 99999),
+                db.from('confirm').select('*').eq('site_name', currentSite).range(0, 99999),
+                db.from('finished').select('*').eq('site_name', currentSite).range(0, 99999)
             ]);
 
             if (compRes.error) throw compRes.error;
@@ -334,10 +336,13 @@
         }
 
         async function fetchReceivedData(startDate, endDate, weightMap) {
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
             const { data, error } = await db.from('confirm')
                 .select('*')
+                .eq('site_name', currentSite)
                 .gte('confirmed_date', startDate)
-                .lte('confirmed_date', endDate);
+                .lte('confirmed_date', endDate)
+                .range(0, 99999);
 
             if (error) throw error;
 
@@ -352,10 +357,13 @@
         }
 
         async function fetchLiftedData(startDate, endDate, weightMap) {
+            const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
             const { data, error } = await db.from('finished')
                 .select('*')
+                .eq('site_name', currentSite)
                 .gte('lifted_date', startDate)
-                .lte('lifted_date', endDate);
+                .lte('lifted_date', endDate)
+                .range(0, 99999);
 
             if (error) throw error;
 

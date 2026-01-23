@@ -499,9 +499,32 @@
             try {
                 const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
 
-                // Fetch all data with necessary fields, filtered by site
-                const { data: components, error: compError } = await db.from("components").select("item_id, position, weight, qty").eq('site_name', currentSite);
-                if (compError) throw compError;
+                // Fetch all components using pagination (Supabase limit is 5000 per request)
+                let allComponents = [];
+                let from = 0;
+                const pageSize = 5000;
+                let hasMore = true;
+
+                while (hasMore) {
+                    const { data: componentsPage, error: compError } = await db
+                        .from("components")
+                        .select("item_id, position, weight, qty")
+                        .eq('site_name', currentSite)
+                        .range(from, from + pageSize - 1);
+
+                    if (compError) throw compError;
+
+                    if (componentsPage && componentsPage.length > 0) {
+                        allComponents = allComponents.concat(componentsPage);
+                        from += pageSize;
+                        hasMore = componentsPage.length === pageSize;
+                    } else {
+                        hasMore = false;
+                    }
+                }
+
+                console.log(`Loaded ${allComponents.length} components for ${currentSite} using pagination`);
+                const components = allComponents;
 
                 const { data: confirmed, error: confError } = await db.from("confirm").select("item_id, position, qty").eq('site_name', currentSite);
                 if (confError) throw confError;

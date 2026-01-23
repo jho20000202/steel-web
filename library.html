@@ -317,6 +317,7 @@
         <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;"
             onchange="handleExcelUpload(this)">
         <span style="color: #aaa; font-size: 13px;">每次顯示100筆，滾動載入更多</span>
+        <span style="color: var(--primary); font-size: 13px; margin-left: 10px;">💡 匯入的構件會自動標記為當前工地</span>
     </div>
 
     <div id="addModal" class="modal">
@@ -419,7 +420,7 @@
         async function loadItems() {
             if (!db) return;
             const currentSite = localStorage.getItem('selectedSite') || '南亞5A';
-            const { data, error } = await db.from('components').select('*').eq('site_name', currentSite).order('created_at', { ascending: false });
+            const { data, error } = await db.from('components').select('*').eq('site_name', currentSite).range(0, 99999).order('created_at', { ascending: false });
             if (error) { console.error('Error loading items:', error); return; }
             allItems = data || [];
             filteredItems = allItems;
