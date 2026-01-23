@@ -134,24 +134,23 @@
 
     <div class="container">
         <div class="page-header" style="position: relative;">
-            <button onclick="window.location.href='factory_management.html'" style="
+            <button disabled style="
                 position: absolute;
                 top: 0;
                 right: 0;
-                background: rgba(195, 164, 14, 0.1);
-                border: 1px solid var(--primary);
-                color: var(--primary);
+                background: rgba(100, 100, 100, 0.1);
+                border: 1px solid #444;
+                color: var(--muted);
                 padding: 8px 16px;
                 border-radius: 20px;
-                cursor: pointer;
+                cursor: not-allowed;
                 font-size: 14px;
-                transition: all 0.3s;
                 display: flex;
                 align-items: center;
                 gap: 6px;
-            " onmouseover="this.style.background='rgba(195, 164, 14, 0.2)'"
-                onmouseout="this.style.background='rgba(195, 164, 14, 0.1)'">
-                加工廠模式
+                opacity: 0.6;
+            ">
+                加工廠模式 (開發中)
             </button>
             <img src="logo.png" alt="Logo" class="logo-img">
             <h1 class="page-title">皆豪工程管理系統</h1>
@@ -162,21 +161,20 @@
             <div class="system-card active"
                 onclick="window.location.href='site_selection.html?redirect=SteelMaterial.html'">
                 <div class="system-name">鋼構進出料記錄系統</div>
-                <span class="status-badge status-in-progress">開發中</span>
+                <span class="status-badge status-active">● 已啟用</span>
             </div>
 
             <!-- 施工圖面 -->
             <div class="system-card active"
                 onclick="window.location.href='site_selection.html?redirect=ConstructionZoneSelection.html'">
                 <div class="system-name">施工圖面</div>
-                <span class="status-badge status-active">● 已啟用</span>
+                <span class="status-badge status-in-progress">開發中</span>
             </div>
 
             <!-- 機具管理 -->
-            <div class="system-card active"
-                onclick="window.location.href='site_selection.html?redirect=equipment.html'">
+            <div class="system-card coming-soon">
                 <div class="system-name">機具管理</div>
-                <span class="status-badge status-in-progress">開發中</span>
+                <span class="status-badge status-coming">Coming Soon</span>
             </div>
 
             <!-- 電焊管理 -->
